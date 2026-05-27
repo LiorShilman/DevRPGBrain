@@ -94,6 +94,8 @@ export const sessionsApi = {
     }),
   getActive: (projectId: string) =>
     request<WorkSession>(`/api/projects/${projectId}/sessions/active`),
+  getLast: (projectId: string) =>
+    request<WorkSession>(`/api/projects/${projectId}/sessions/last`),
   list: (projectId: string) =>
     request<WorkSession[]>(`/api/projects/${projectId}/sessions`),
 }

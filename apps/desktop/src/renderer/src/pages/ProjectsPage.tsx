@@ -15,6 +15,7 @@ export default function ProjectsPage() {
   const [sessionStates, setSessionStates] = useState<Record<string, SessionState>>({})
   const [endingSession, setEndingSession] = useState<{ projectId: string; session: WorkSession } | null>(null)
   const [completedSession, setCompletedSession] = useState<WorkSession | null>(null)
+  const [lastSessions, setLastSessions] = useState<Record<string, WorkSession>>({})
 
   useEffect(() => {
     loadProjects()
@@ -26,13 +27,17 @@ export default function ProjectsPage() {
       setError(null)
       const list = await projectsApi.list()
       setProjects(list)
-      // Check for active sessions on all projects in parallel
+      // Load active + last sessions for all projects in parallel
       await Promise.all(list.map(async (p) => {
-        try {
-          const session = await sessionsApi.getActive(p.id)
-          setSessionStates((prev) => ({ ...prev, [p.id]: { status: 'active', session } }))
-        } catch {
-          // 404 = no active session, that's fine
+        const [active, last] = await Promise.allSettled([
+          sessionsApi.getActive(p.id),
+          sessionsApi.getLast(p.id),
+        ])
+        if (active.status === 'fulfilled') {
+          setSessionStates((prev) => ({ ...prev, [p.id]: { status: 'active', session: active.value } }))
+        }
+        if (last.status === 'fulfilled') {
+          setLastSessions((prev) => ({ ...prev, [p.id]: last.value }))
         }
       }))
     } catch {
@@ -88,6 +93,7 @@ export default function ProjectsPage() {
     try {
       const ended = await sessionsApi.end(projectId, session.id, data)
       setSessionStates((prev) => ({ ...prev, [projectId]: { status: 'idle' } }))
+      setLastSessions((prev) => ({ ...prev, [projectId]: ended }))
       setEndingSession(null)
       setCompletedSession(ended)
     } catch (err) {
@@ -137,6 +143,7 @@ export default function ProjectsPage() {
               gitState={gitStates[p.id] ?? { status: 'idle' }}
               scanState={scanStates[p.id] ?? { status: 'idle' }}
               sessionState={sessionStates[p.id] ?? { status: 'idle' }}
+              lastSession={lastSessions[p.id] ?? null}
               onGitScan={() => handleGitScan(p)}
               onRepoScan={() => handleRepoScan(p)}
               onStartSession={() => handleStartSession(p)}
@@ -200,6 +207,7 @@ function ProjectCard({
   gitState,
   scanState,
   sessionState,
+  lastSession,
   onGitScan,
   onRepoScan,
   onStartSession,
@@ -210,6 +218,7 @@ function ProjectCard({
   gitState: GitState
   scanState: ScanState
   sessionState: SessionState
+  lastSession: WorkSession | null
   onGitScan: () => void
   onRepoScan: () => void
   onStartSession: () => void
@@ -224,6 +233,11 @@ function ProjectCard({
   const scan = scanState.status === 'done' ? scanState.data : null
   const activeSession = (sessionState.status === 'active' || sessionState.status === 'ending')
     ? sessionState.session
+    : null
+
+  const showContinue = !activeSession && lastSession
+  const daysSince = lastSession?.endedAt
+    ? Math.floor((Date.now() - new Date(lastSession.endedAt).getTime()) / 86400000)
     : null
 
   return (
@@ -249,6 +263,30 @@ function ProjectCard({
           >
             ■ End
           </button>
+        </div>
+      )}
+
+      {showContinue && lastSession && (
+        <div className="continue-card">
+          <div className="continue-header">
+            <span className="continue-label">
+              Last session {daysSince === 0 ? 'today' : daysSince === 1 ? 'yesterday' : `${daysSince}d ago`}
+              {lastSession.durationMinutes ? ` · ${lastSession.durationMinutes}m` : ''}
+            </span>
+            <button type="button" className="btn-continue btn-sm" onClick={onStartSession}
+              disabled={sessionState.status === 'starting'}>
+              ▶ Continue
+            </button>
+          </div>
+          {lastSession.aiSummary && (
+            <p className="continue-summary">{lastSession.aiSummary}</p>
+          )}
+          {lastSession.nextSteps.length > 0 && (
+            <div className="continue-next">
+              <span className="continue-next-label">Next:</span>
+              <span className="continue-next-text">{lastSession.nextSteps[0]}</span>
+            </div>
+          )}
         </div>
       )}
 

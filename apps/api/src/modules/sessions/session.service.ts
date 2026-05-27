@@ -79,6 +79,14 @@ export async function getActiveSession(projectId: string) {
   return parseSession(session)
 }
 
+export async function getLastSession(projectId: string) {
+  const session = await prisma.workSession.findFirst({
+    where: { projectId, endedAt: { not: null } },
+    orderBy: { endedAt: 'desc' },
+  })
+  return parseSession(session)
+}
+
 export async function listSessions(projectId: string, limit = 20) {
   const sessions = await prisma.workSession.findMany({
     where: { projectId },

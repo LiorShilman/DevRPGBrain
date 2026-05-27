@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express'
-import { startSession, endSession, getActiveSession, listSessions } from './session.service'
+import { startSession, endSession, getActiveSession, getLastSession, listSessions } from './session.service'
 
 export const sessionRouter = Router({ mergeParams: true })
 
@@ -29,6 +29,13 @@ sessionRouter.post('/sessions/:sessionId/end', async (req: Request, res: Respons
 sessionRouter.get('/sessions/active', async (req: Request, res: Response) => {
   const session = await getActiveSession(req.params.id)
   if (!session) return res.status(404).json({ error: 'No active session' })
+  res.json(session)
+})
+
+// GET /api/projects/:id/sessions/last
+sessionRouter.get('/sessions/last', async (req: Request, res: Response) => {
+  const session = await getLastSession(req.params.id)
+  if (!session) return res.status(404).json({ error: 'No sessions yet' })
   res.json(session)
 })
 
