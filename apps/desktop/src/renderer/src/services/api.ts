@@ -1,0 +1,79 @@
+import { API_BASE_URL } from '@shared/constants'
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    ...options,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error ?? res.statusText)
+  }
+  if (res.status === 204) return undefined as T
+  return res.json()
+}
+
+export interface Project {
+  id: string
+  name: string
+  path: string
+  description: string | null
+  primaryLanguage: string | null
+  framework: string | null
+  isGitRepo: boolean
+  createdAt: string
+  updatedAt: string
+  lastOpenedAt: string | null
+  archivedAt: string | null
+}
+
+export interface GitSnapshot {
+  id: string
+  projectId: string
+  branch: string | null
+  lastCommitHash: string | null
+  lastCommitMessage: string | null
+  lastCommitDate: string | null
+  changedFilesCount: number
+  uncommittedChangesCount: number
+  createdAt: string
+}
+
+export interface GitScanResult {
+  branch: string
+  latestCommit: { hash: string; message: string; author: string; date: string } | null
+  changedFilesCount: number
+  uncommittedChangesCount: number
+  isClean: boolean
+  ahead: number
+  behind: number
+}
+
+export interface CommitInfo {
+  hash: string
+  message: string
+  author: string
+  date: string
+}
+
+export const gitApi = {
+  scan: (projectId: string) =>
+    request<GitScanResult>(`/api/projects/${projectId}/git-scan`, { method: 'POST' }),
+  getSnapshot: (projectId: string) =>
+    request<GitSnapshot>(`/api/projects/${projectId}/git`),
+  getCommits: (projectId: string, limit = 10) =>
+    request<CommitInfo[]>(`/api/projects/${projectId}/git/commits?limit=${limit}`),
+}
+
+export const projectsApi = {
+  list: () => request<Project[]>('/api/projects'),
+  get: (id: string) => request<Project>(`/api/projects/${id}`),
+  create: (data: { name: string; path: string; description?: string }) =>
+    request<Project>('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { name?: string; description?: string }) =>
+    request<Project>(`/api/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  archive: (id: string) =>
+    request<void>(`/api/projects/${id}/archive`, { method: 'DELETE' }),
+  delete: (id: string) =>
+    request<void>(`/api/projects/${id}`, { method: 'DELETE' }),
+}

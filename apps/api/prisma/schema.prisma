@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id              String          @id @default(uuid())
+  name            String
+  path            String          @unique
+  description     String?
+  primaryLanguage String?
+  framework       String?
+  isGitRepo       Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  lastOpenedAt    DateTime?
+  archivedAt      DateTime?
+
+  gitSnapshots GitSnapshot[]
+  repoScans    RepoScan[]
+  sessions     WorkSession[]
+  memories     MemoryItem[]
+  healthScores ProjectHealth[]
+}
+
+model GitSnapshot {
+  id                      String    @id @default(uuid())
+  projectId               String
+  branch                  String?
+  lastCommitHash          String?
+  lastCommitMessage       String?
+  lastCommitDate          DateTime?
+  changedFilesCount       Int       @default(0)
+  uncommittedChangesCount Int       @default(0)
+  createdAt               DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model RepoScan {
+  id                String   @id @default(uuid())
+  projectId         String
+  detectedStack     String   @default("[]")
+  detectedLanguages String   @default("[]")
+  importantFiles    String   @default("[]")
+  todoCount         Int      @default(0)
+  fixmeCount        Int      @default(0)
+  fileCount         Int      @default(0)
+  summary           String?
+  createdAt         DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model WorkSession {
+  id              String    @id @default(uuid())
+  projectId       String
+  title           String?
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationMinutes Int?
+  userNotes       String?
+  aiSummary       String?
+  blockers        String?   @default("[]")
+  decisions       String?   @default("[]")
+  nextSteps       String?   @default("[]")
+  xpAwarded       Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model DailyCheckIn {
+  id              String   @id @default(uuid())
+  date            String   @unique
+  energyLevel     Int
+  moodLevel       Int
+  focusProjectId  String?
+  mainGoal        String?
+  possibleBlocker String?
+  createdAt       DateTime @default(now())
+}
+
+model MemoryItem {
+  id         String   @id @default(uuid())
+  projectId  String?
+  type       String // SESSION_SUMMARY | DECISION | BLOCKER | NEXT_STEP | MILESTONE | PATTERN | NOTE
+  title      String
+  content    String
+  importance Int      @default(1)
+  source     String // AI | USER | GIT | SCAN
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+model ProjectHealth {
+  id              String   @id @default(uuid())
+  projectId       String
+  score           Int
+  status          String // HEALTHY | STALLED | RISKY | ABANDONED | UNKNOWN
+  reasons         String   @default("[]")
+  recommendations String   @default("[]")
+  calculatedAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model RpgProfile {
+  id             String   @id @default(uuid())
+  level          Int      @default(1)
+  totalXp        Int      @default(0)
+  focus          Int      @default(1)
+  discipline     Int      @default(1)
+  engineering    Int      @default(1)
+  consistency    Int      @default(1)
+  creativity     Int      @default(1)
+  problemSolving Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model XpEvent {
+  id        String   @id @default(uuid())
+  projectId String?
+  sessionId String?
+  amount    Int
+  reason    String
+  category  String
+  createdAt DateTime @default(now())
+}
+
+model AchievementUnlock {
+  id             String   @id @default(uuid())
+  achievementKey String   @unique
+  unlockedAt     DateTime @default(now())
+}

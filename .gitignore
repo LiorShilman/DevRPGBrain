@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+out/
+.env
+*.db
+*.db-journal
+.turbo/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
