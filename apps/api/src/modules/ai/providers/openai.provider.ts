@@ -61,7 +61,7 @@ export class OpenAIProvider implements AIProvider {
         model: this.model,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         temperature: 0.3,
-        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
       }),
     })
     if (!res.ok) return this.throwOpenAIError(res)
@@ -77,7 +77,7 @@ export class OpenAIProvider implements AIProvider {
         model: this.model,
         messages: [{ role: 'system', content: system }, ...messages],
         temperature: 0.5,
-        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
       }),
     })
     if (!res.ok) return this.throwOpenAIError(res)
