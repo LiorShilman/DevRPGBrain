@@ -65,6 +65,39 @@ export interface ScanResult {
   fileCount: number
 }
 
+export interface WorkSession {
+  id: string
+  projectId: string
+  title: string | null
+  startedAt: string
+  endedAt: string | null
+  durationMinutes: number | null
+  userNotes: string | null
+  aiSummary: string | null
+  blockers: string[]
+  decisions: string[]
+  nextSteps: string[]
+  xpAwarded: number
+  createdAt: string
+}
+
+export const sessionsApi = {
+  start: (projectId: string, title?: string) =>
+    request<WorkSession>(`/api/projects/${projectId}/sessions/start`, {
+      method: 'POST',
+      body: JSON.stringify({ title }),
+    }),
+  end: (projectId: string, sessionId: string, data: { userNotes?: string; blockers?: string[]; decisions?: string[]; nextSteps?: string[] }) =>
+    request<WorkSession>(`/api/projects/${projectId}/sessions/${sessionId}/end`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  getActive: (projectId: string) =>
+    request<WorkSession>(`/api/projects/${projectId}/sessions/active`),
+  list: (projectId: string) =>
+    request<WorkSession[]>(`/api/projects/${projectId}/sessions`),
+}
+
 export const scanApi = {
   scan: (projectId: string) =>
     request<ScanResult>(`/api/projects/${projectId}/scan`, { method: 'POST' }),
