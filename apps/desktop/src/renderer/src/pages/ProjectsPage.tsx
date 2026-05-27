@@ -488,6 +488,12 @@ function SessionSummaryModal({ session, onClose }: { session: WorkSession; onClo
           <button type="button" className="btn-ghost" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body">
+          <div className="xp-award">
+            <span className="xp-award-amount">+{session.xpAwarded} XP</span>
+            {session.leveledUp && (
+              <span className="xp-levelup">⬆ Level {session.newLevel}!</span>
+            )}
+          </div>
           {session.aiSummary && (
             <div className="summary-block">
               <p className="summary-label">AI Summary</p>

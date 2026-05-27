@@ -1,5 +1,6 @@
 import { prisma } from '../../db/client'
 import { getAIProvider } from '../ai/ai-provider.factory'
+import { awardXp, calcSessionXp } from '../rpg/rpg.service'
 import type { StartSessionInput, EndSessionInput } from './session.types'
 
 type RawSession = Awaited<ReturnType<typeof prisma.workSession.findFirst>>
@@ -56,6 +57,21 @@ export async function endSession(sessionId: string, input: EndSessionInput) {
     console.warn('[AI] summarizeSession failed:', err instanceof Error ? err.message : err)
   }
 
+  const xpAmount = calcSessionXp({
+    durationMinutes,
+    hasNotes: !!(input.userNotes?.trim()),
+    blockerCount: (input.blockers ?? []).length,
+    nextStepCount: (input.nextSteps ?? []).length,
+  })
+
+  const { leveledUp, newLevel } = await awardXp({
+    amount: xpAmount,
+    reason: `Completed ${durationMinutes}m session`,
+    category: 'SESSION',
+    projectId: session.projectId,
+    sessionId,
+  })
+
   const updated = await prisma.workSession.update({
     where: { id: sessionId },
     data: {
@@ -66,9 +82,12 @@ export async function endSession(sessionId: string, input: EndSessionInput) {
       decisions: JSON.stringify(input.decisions ?? []),
       nextSteps: JSON.stringify(input.nextSteps ?? []),
       aiSummary,
+      xpAwarded: xpAmount,
     },
   })
-  return parseSession(updated)
+
+  const parsed = parseSession(updated)
+  return { ...parsed, leveledUp, newLevel }
 }
 
 export async function getActiveSession(projectId: string) {

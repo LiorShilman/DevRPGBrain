@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { rpgApi, RpgProfile } from '../services/api'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: '⊞' },
@@ -7,6 +9,12 @@ const navItems = [
 ]
 
 export default function Layout() {
+  const [profile, setProfile] = useState<RpgProfile | null>(null)
+
+  useEffect(() => {
+    rpgApi.getProfile().then(setProfile).catch(() => {})
+  }, [])
+
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -27,6 +35,15 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+        {profile && (
+          <div className="sidebar-xp">
+            <div className="xp-level">Lv.{profile.level}</div>
+            <div className="xp-bar-wrap">
+              <div className="xp-bar" style={{ '--xp-w': `${profile.progressPercent}%` } as React.CSSProperties} />
+            </div>
+            <div className="xp-label">{profile.xpProgress} / {profile.xpNeeded} XP</div>
+          </div>
+        )}
       </aside>
       <main className="main-content">
         <Outlet />

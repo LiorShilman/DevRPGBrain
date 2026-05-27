@@ -78,6 +78,8 @@ export interface WorkSession {
   decisions: string[]
   nextSteps: string[]
   xpAwarded: number
+  leveledUp?: boolean
+  newLevel?: number
   createdAt: string
 }
 
@@ -114,6 +116,26 @@ export const gitApi = {
     request<GitSnapshot>(`/api/projects/${projectId}/git`),
   getCommits: (projectId: string, limit = 10) =>
     request<CommitInfo[]>(`/api/projects/${projectId}/git/commits?limit=${limit}`),
+}
+
+export interface RpgProfile {
+  id: string
+  level: number
+  totalXp: number
+  xpProgress: number
+  xpNeeded: number
+  progressPercent: number
+  focus: number
+  discipline: number
+  engineering: number
+  consistency: number
+  creativity: number
+  problemSolving: number
+  recentEvents: { id: string; amount: number; reason: string; category: string; createdAt: string }[]
+}
+
+export const rpgApi = {
+  getProfile: () => request<RpgProfile>('/api/rpg/profile'),
 }
 
 export const projectsApi = {
