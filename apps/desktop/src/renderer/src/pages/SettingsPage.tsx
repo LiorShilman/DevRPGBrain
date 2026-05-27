@@ -117,27 +117,24 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="form-field">
-                <label>Model <span className="optional">(ריק = gpt-4o-mini)</span></label>
+                <label>Model <span className="optional">(ריק = gpt-5.4-mini)</span></label>
                 <input
                   value={openAiModel}
                   onChange={(e) => setOpenAiModel(e.target.value)}
-                  placeholder="gpt-4o-mini"
+                  placeholder="gpt-5.4-mini"
                   list="openai-models"
                 />
                 <datalist id="openai-models">
-                  <option value="gpt-4.1" />
-                  <option value="gpt-4.1-mini" />
-                  <option value="gpt-4.1-nano" />
-                  <option value="gpt-4o" />
-                  <option value="gpt-4o-mini" />
-                  <option value="o3" />
-                  <option value="o3-mini" />
-                  <option value="o4-mini" />
+                  <option value="gpt-5.5" />
+                  <option value="gpt-5.4" />
+                  <option value="gpt-5.4-mini" />
+                  <option value="gpt-5.4-nano" />
                 </datalist>
                 <p className="settings-model-hint">
-                  מומלץ: <ModelChip name="gpt-4.1" onClick={setOpenAiModel} /> ·{' '}
-                  מהיר וזול: <ModelChip name="gpt-4.1-mini" onClick={setOpenAiModel} /> ·{' '}
-                  הסקה: <ModelChip name="o4-mini" onClick={setOpenAiModel} />
+                  הכי חכם: <ModelChip name="gpt-5.5" onClick={setOpenAiModel} /> ·{' '}
+                  מאוזן: <ModelChip name="gpt-5.4" onClick={setOpenAiModel} /> ·{' '}
+                  מהיר: <ModelChip name="gpt-5.4-mini" onClick={setOpenAiModel} /> ·{' '}
+                  זול: <ModelChip name="gpt-5.4-nano" onClick={setOpenAiModel} />
                 </p>
               </div>
             </div>

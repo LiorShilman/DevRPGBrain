@@ -191,7 +191,7 @@ export default function HelpPage() {
             </p>
             <ul className="help-list">
               <li><strong>Mock</strong> — ללא AI, מיועד לפיתוח ובדיקות</li>
-              <li><strong>OpenAI:</strong> gpt-4.1 · gpt-4.1-mini · o3 · o4-mini</li>
+              <li><strong>OpenAI:</strong> gpt-5.5 · gpt-5.4 · gpt-5.4-mini · gpt-5.4-nano</li>
               <li><strong>Claude:</strong> claude-opus-4-7 · claude-sonnet-4-6 · claude-haiku-4-5</li>
               <li>לוחצים על שם המודל בהגדרות כדי לבחור אותו מיד</li>
               <li>המפתח נשמר <strong>מקומית בלבד</strong> — לא נשלח לשרת חיצוני</li>

@@ -42,7 +42,7 @@ export class OpenAIProvider implements AIProvider {
   private apiKey: string
   private model: string
 
-  constructor(apiKey: string, model = 'gpt-4o-mini') {
+  constructor(apiKey: string, model = 'gpt-5.4-mini') {
     this.apiKey = apiKey
     this.model = model
   }
