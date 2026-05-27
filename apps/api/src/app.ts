@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import { projectRouter } from './modules/projects/project.controller'
 import { gitRouter } from './modules/git/git.controller'
+import { scanRouter } from './modules/scans/repo-scanner.controller'
 
 const app = express()
 
@@ -14,6 +15,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 app.use('/api/projects', projectRouter)
 app.use('/api/projects/:id', gitRouter)
+app.use('/api/projects/:id', scanRouter)
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { projectsApi, gitApi, Project, GitScanResult } from '../services/api'
+import { projectsApi, gitApi, scanApi, Project, GitScanResult, ScanResult } from '../services/api'
 
-type GitState = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: GitScanResult } | { status: 'error'; message: string }
+type GitState  = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: GitScanResult } | { status: 'error'; message: string }
+type ScanState = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: ScanResult }  | { status: 'error'; message: string }
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -9,6 +10,7 @@ export default function ProjectsPage() {
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [gitStates, setGitStates] = useState<Record<string, GitState>>({})
+  const [scanStates, setScanStates] = useState<Record<string, ScanState>>({})
 
   useEffect(() => {
     loadProjects()
@@ -37,6 +39,17 @@ export default function ProjectsPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Git scan failed'
       setGitStates((prev) => ({ ...prev, [project.id]: { status: 'error', message } }))
+    }
+  }
+
+  async function handleRepoScan(project: Project) {
+    setScanStates((prev) => ({ ...prev, [project.id]: { status: 'scanning' } }))
+    try {
+      const data = await scanApi.scan(project.id)
+      setScanStates((prev) => ({ ...prev, [project.id]: { status: 'done', data } }))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Scan failed'
+      setScanStates((prev) => ({ ...prev, [project.id]: { status: 'error', message } }))
     }
   }
 
@@ -76,7 +89,9 @@ export default function ProjectsPage() {
               key={p.id}
               project={p}
               gitState={gitStates[p.id] ?? { status: 'idle' }}
+              scanState={scanStates[p.id] ?? { status: 'idle' }}
               onGitScan={() => handleGitScan(p)}
+              onRepoScan={() => handleRepoScan(p)}
               onArchive={() => handleArchive(p.id)}
             />
           ))}
@@ -99,12 +114,16 @@ export default function ProjectsPage() {
 function ProjectCard({
   project,
   gitState,
+  scanState,
   onGitScan,
+  onRepoScan,
   onArchive,
 }: {
   project: Project
   gitState: GitState
+  scanState: ScanState
   onGitScan: () => void
+  onRepoScan: () => void
   onArchive: () => void
 }) {
   const lastOpened = project.lastOpenedAt
@@ -112,6 +131,7 @@ function ProjectCard({
     : 'Never'
 
   const git = gitState.status === 'done' ? gitState.data : null
+  const scan = scanState.status === 'done' ? scanState.data : null
 
   return (
     <div className="project-card">
@@ -166,19 +186,49 @@ function ProjectCard({
         <p className="git-error">{gitState.message}</p>
       )}
 
+      {scan && (
+        <div className="scan-info">
+          <div className="scan-stack">
+            {scan.detectedStack.map((s) => (
+              <span key={s} className="meta-badge meta-stack">{s}</span>
+            ))}
+          </div>
+          <div className="scan-stats">
+            <span className="scan-stat">📄 {scan.fileCount} files</span>
+            {scan.todoCount > 0 && <span className="scan-stat todo">TODO: {scan.todoCount}</span>}
+            {scan.fixmeCount > 0 && <span className="scan-stat fixme">FIXME: {scan.fixmeCount}</span>}
+          </div>
+        </div>
+      )}
+
+      {scanState.status === 'error' && (
+        <p className="git-error">{scanState.message}</p>
+      )}
+
       <div className="project-footer">
         <p className="project-path" title={project.path}>
           {project.path}
         </p>
-        <button
-          type="button"
-          className="btn-ghost btn-sm"
-          onClick={onGitScan}
-          disabled={gitState.status === 'scanning'}
-          title="Scan Git repository"
-        >
-          {gitState.status === 'scanning' ? '⟳ Scanning…' : '⎇ Scan Git'}
-        </button>
+        <div className="project-actions">
+          <button
+            type="button"
+            className="btn-ghost btn-sm"
+            onClick={onGitScan}
+            disabled={gitState.status === 'scanning'}
+            title="Scan Git repository"
+          >
+            {gitState.status === 'scanning' ? '⟳ Scanning…' : '⎇ Git'}
+          </button>
+          <button
+            type="button"
+            className="btn-ghost btn-sm"
+            onClick={onRepoScan}
+            disabled={scanState.status === 'scanning'}
+            title="Scan repository files"
+          >
+            {scanState.status === 'scanning' ? '⟳ Scanning…' : '⊞ Scan'}
+          </button>
+        </div>
       </div>
 
       <p className="project-opened">Last opened: {lastOpened}</p>

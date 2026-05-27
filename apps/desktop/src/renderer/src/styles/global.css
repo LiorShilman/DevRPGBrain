@@ -14,6 +14,7 @@
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #ef4444;
+  --accent: #a78bfa;
   --text: #e5e7eb;
   --text-muted: #6b7280;
   --text-dim: #374151;
@@ -286,6 +287,50 @@ body {
 .git-error {
   font-size: 0.78rem;
   color: var(--danger);
+}
+
+/* ── Scan results ───────────────────────── */
+.scan-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg);
+  border-radius: 5px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+}
+
+.scan-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.meta-stack {
+  color: var(--accent, #a78bfa) !important;
+  background: rgba(167,139,250,0.1) !important;
+  border-color: rgba(167,139,250,0.2) !important;
+}
+
+.scan-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scan-stat {
+  font-size: 0.73rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.scan-stat.todo  { color: var(--warning); }
+.scan-stat.fixme { color: var(--danger); }
+
+/* ── Project footer actions ─────────────── */
+.project-actions {
+  display: flex;
+  gap: 4px;
 }
 
 /* ── Modal ──────────────────────────────── */

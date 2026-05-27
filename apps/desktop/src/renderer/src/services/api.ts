@@ -56,6 +56,22 @@ export interface CommitInfo {
   date: string
 }
 
+export interface ScanResult {
+  detectedStack: string[]
+  detectedLanguages: string[]
+  importantFiles: string[]
+  todoCount: number
+  fixmeCount: number
+  fileCount: number
+}
+
+export const scanApi = {
+  scan: (projectId: string) =>
+    request<ScanResult>(`/api/projects/${projectId}/scan`, { method: 'POST' }),
+  getLatest: (projectId: string) =>
+    request<ScanResult>(`/api/projects/${projectId}/scan`),
+}
+
 export const gitApi = {
   scan: (projectId: string) =>
     request<GitScanResult>(`/api/projects/${projectId}/git-scan`, { method: 'POST' }),
