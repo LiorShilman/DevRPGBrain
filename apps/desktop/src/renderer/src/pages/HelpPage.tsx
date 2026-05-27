@@ -191,10 +191,10 @@ export default function HelpPage() {
             </p>
             <ul className="help-list">
               <li><strong>Mock</strong> — ללא AI, מיועד לפיתוח ובדיקות</li>
-              <li><strong>OpenAI</strong> — gpt-4o-mini כברירת מחדל, מהיר וזול</li>
-              <li><strong>Claude</strong> — claude-haiku כברירת מחדל, הסקה מצוינת</li>
-              <li>ניתן לשנות model בשדה נפרד</li>
-              <li>המפתח <strong>לא</strong> נשלח לשום שרת חיצוני</li>
+              <li><strong>OpenAI:</strong> gpt-4.1 · gpt-4.1-mini · o3 · o4-mini</li>
+              <li><strong>Claude:</strong> claude-opus-4-7 · claude-sonnet-4-6 · claude-haiku-4-5</li>
+              <li>לוחצים על שם המודל בהגדרות כדי לבחור אותו מיד</li>
+              <li>המפתח נשמר <strong>מקומית בלבד</strong> — לא נשלח לשרת חיצוני</li>
             </ul>
           </div>
         </div>

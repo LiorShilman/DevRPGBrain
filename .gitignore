@@ -11,3 +11,5 @@ coverage/
 .DS_Store
 Thumbs.db
 apps/api/settings.json
+apps/settings.json
+settings.json

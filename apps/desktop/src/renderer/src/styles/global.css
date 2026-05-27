@@ -1165,6 +1165,30 @@ body {
   color: var(--success);
 }
 
+.settings-error { margin-bottom: 20px; }
+.provider-radio { display: none; }
+
+.settings-model-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-top: 2px;
+}
+
+.model-chip {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 0.73rem;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+.model-chip:hover { background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.4); }
+
 /* ── Project Brain Modal ─────────────────── */
 .modal-brain {
   width: 580px;

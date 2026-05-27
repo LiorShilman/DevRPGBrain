@@ -65,7 +65,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
+      {error && <div className="error-banner settings-error">{error}</div>}
 
       <form onSubmit={handleSave} className="settings-form">
 
@@ -88,7 +88,7 @@ export default function SettingsPage() {
                   value={p.id}
                   checked={provider === p.id}
                   onChange={() => setProvider(p.id)}
-                  style={{ display: 'none' }}
+                  className="provider-radio"
                 />
                 <div className="provider-card-check">{provider === p.id ? '●' : '○'}</div>
                 <div>
@@ -117,12 +117,28 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="form-field">
-                <label>Model <span className="optional">(optional, default: gpt-4o-mini)</span></label>
+                <label>Model <span className="optional">(ריק = gpt-4o-mini)</span></label>
                 <input
                   value={openAiModel}
                   onChange={(e) => setOpenAiModel(e.target.value)}
                   placeholder="gpt-4o-mini"
+                  list="openai-models"
                 />
+                <datalist id="openai-models">
+                  <option value="gpt-4.1" />
+                  <option value="gpt-4.1-mini" />
+                  <option value="gpt-4.1-nano" />
+                  <option value="gpt-4o" />
+                  <option value="gpt-4o-mini" />
+                  <option value="o3" />
+                  <option value="o3-mini" />
+                  <option value="o4-mini" />
+                </datalist>
+                <p className="settings-model-hint">
+                  מומלץ: <ModelChip name="gpt-4.1" onClick={setOpenAiModel} /> ·{' '}
+                  מהיר וזול: <ModelChip name="gpt-4.1-mini" onClick={setOpenAiModel} /> ·{' '}
+                  הסקה: <ModelChip name="o4-mini" onClick={setOpenAiModel} />
+                </p>
               </div>
             </div>
           </div>
@@ -130,7 +146,7 @@ export default function SettingsPage() {
 
         {provider === 'claude' && (
           <div className="settings-section">
-            <h2 className="settings-section-title">Claude Configuration</h2>
+            <h2 className="settings-section-title">Claude (Anthropic) Configuration</h2>
             <div className="settings-fields">
               <div className="form-field">
                 <label>
@@ -145,12 +161,23 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="form-field">
-                <label>Model <span className="optional">(optional, default: claude-haiku-4-5)</span></label>
+                <label>Model <span className="optional">(ריק = claude-sonnet-4-6)</span></label>
                 <input
                   value={claudeModel}
                   onChange={(e) => setClaudeModel(e.target.value)}
-                  placeholder="claude-haiku-4-5-20251001"
+                  placeholder="claude-sonnet-4-6"
+                  list="claude-models"
                 />
+                <datalist id="claude-models">
+                  <option value="claude-opus-4-7" />
+                  <option value="claude-sonnet-4-6" />
+                  <option value="claude-haiku-4-5-20251001" />
+                </datalist>
+                <p className="settings-model-hint">
+                  הכי חכם: <ModelChip name="claude-opus-4-7" onClick={setClaudeModel} /> ·{' '}
+                  מאוזן: <ModelChip name="claude-sonnet-4-6" onClick={setClaudeModel} /> ·{' '}
+                  מהיר: <ModelChip name="claude-haiku-4-5-20251001" onClick={setClaudeModel} />
+                </p>
               </div>
             </div>
           </div>
@@ -164,5 +191,13 @@ export default function SettingsPage() {
         </div>
       </form>
     </div>
+  )
+}
+
+function ModelChip({ name, onClick }: { name: string; onClick: (v: string) => void }) {
+  return (
+    <button type="button" className="model-chip" onClick={() => onClick(name)}>
+      {name}
+    </button>
   )
 }

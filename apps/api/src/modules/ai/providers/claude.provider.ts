@@ -42,7 +42,7 @@ export class ClaudeProvider implements AIProvider {
   private apiKey: string
   private model: string
 
-  constructor(apiKey: string, model = 'claude-haiku-4-5-20251001') {
+  constructor(apiKey: string, model = 'claude-sonnet-4-6') {
     this.apiKey = apiKey
     this.model = model
   }

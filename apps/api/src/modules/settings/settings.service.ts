@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
 
-const SETTINGS_PATH = join(__dirname, '../../../../settings.json')
+// process.cwd() = apps/api when started via npm scripts
+const SETTINGS_PATH = join(process.cwd(), 'settings.json')
 
 export interface AppSettings {
   aiProvider: 'mock' | 'openai' | 'claude'
