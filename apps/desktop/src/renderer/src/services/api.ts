@@ -144,6 +144,23 @@ export interface RpgProfile {
   recentEvents: { id: string; amount: number; reason: string; category: string; createdAt: string }[]
 }
 
+export interface ProjectHealth {
+  id: string
+  projectId: string
+  score: number
+  status: 'HEALTHY' | 'STALLED' | 'RISKY' | 'ABANDONED' | 'UNKNOWN'
+  reasons: string[]
+  recommendations: string[]
+  calculatedAt: string
+}
+
+export const healthApi = {
+  calculate: (projectId: string) =>
+    request<ProjectHealth>(`/api/projects/${projectId}/health/calculate`, { method: 'POST' }),
+  getLatest: (projectId: string) =>
+    request<ProjectHealth>(`/api/projects/${projectId}/health`),
+}
+
 export const rpgApi = {
   getProfile: () => request<RpgProfile>('/api/rpg/profile'),
   getAchievements: () => request<Achievement[]>('/api/rpg/achievements'),

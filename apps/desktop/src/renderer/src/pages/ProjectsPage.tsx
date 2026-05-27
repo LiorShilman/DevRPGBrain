@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { projectsApi, gitApi, scanApi, sessionsApi, Project, GitScanResult, ScanResult, WorkSession } from '../services/api'
+import { projectsApi, gitApi, scanApi, sessionsApi, healthApi, Project, GitScanResult, ScanResult, WorkSession, ProjectHealth } from '../services/api'
 
 type GitState     = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: GitScanResult } | { status: 'error'; message: string }
 type ScanState    = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: ScanResult }    | { status: 'error'; message: string }
@@ -16,6 +16,7 @@ export default function ProjectsPage() {
   const [endingSession, setEndingSession] = useState<{ projectId: string; session: WorkSession } | null>(null)
   const [completedSession, setCompletedSession] = useState<WorkSession | null>(null)
   const [lastSessions, setLastSessions] = useState<Record<string, WorkSession>>({})
+  const [healthScores, setHealthScores] = useState<Record<string, ProjectHealth>>({})
 
   useEffect(() => {
     loadProjects()
@@ -27,17 +28,21 @@ export default function ProjectsPage() {
       setError(null)
       const list = await projectsApi.list()
       setProjects(list)
-      // Load active + last sessions for all projects in parallel
+      // Load active sessions, last sessions, and health for all projects in parallel
       await Promise.all(list.map(async (p) => {
-        const [active, last] = await Promise.allSettled([
+        const [active, last, health] = await Promise.allSettled([
           sessionsApi.getActive(p.id),
           sessionsApi.getLast(p.id),
+          healthApi.getLatest(p.id),
         ])
         if (active.status === 'fulfilled') {
           setSessionStates((prev) => ({ ...prev, [p.id]: { status: 'active', session: active.value } }))
         }
         if (last.status === 'fulfilled') {
           setLastSessions((prev) => ({ ...prev, [p.id]: last.value }))
+        }
+        if (health.status === 'fulfilled') {
+          setHealthScores((prev) => ({ ...prev, [p.id]: health.value }))
         }
       }))
     } catch {
@@ -96,6 +101,10 @@ export default function ProjectsPage() {
       setLastSessions((prev) => ({ ...prev, [projectId]: ended }))
       setEndingSession(null)
       setCompletedSession(ended)
+      // Refresh health score (API recalculates on session end, just fetch)
+      healthApi.getLatest(projectId).then((h) =>
+        setHealthScores((prev) => ({ ...prev, [projectId]: h }))
+      ).catch(() => {})
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to end session'
       setError(message)
@@ -144,6 +153,7 @@ export default function ProjectsPage() {
               scanState={scanStates[p.id] ?? { status: 'idle' }}
               sessionState={sessionStates[p.id] ?? { status: 'idle' }}
               lastSession={lastSessions[p.id] ?? null}
+              health={healthScores[p.id] ?? null}
               onGitScan={() => handleGitScan(p)}
               onRepoScan={() => handleRepoScan(p)}
               onStartSession={() => handleStartSession(p)}
@@ -186,6 +196,19 @@ export default function ProjectsPage() {
   )
 }
 
+const HEALTH_META: Record<string, { label: string; cls: string }> = {
+  HEALTHY:   { label: '● Healthy',   cls: 'health-healthy'   },
+  STALLED:   { label: '● Stalled',   cls: 'health-stalled'   },
+  RISKY:     { label: '● Risky',     cls: 'health-risky'     },
+  ABANDONED: { label: '● Abandoned', cls: 'health-abandoned' },
+  UNKNOWN:   { label: '○ Unknown',   cls: 'health-unknown'   },
+}
+
+function HealthBadge({ score, status }: { score: number; status: string }) {
+  const meta = HEALTH_META[status] ?? HEALTH_META.UNKNOWN
+  return <span className={`health-badge ${meta.cls}`}>{meta.label} {score}</span>
+}
+
 function SessionTimer({ startedAt }: { startedAt: string }) {
   const [elapsed, setElapsed] = useState(0)
 
@@ -208,6 +231,7 @@ function ProjectCard({
   scanState,
   sessionState,
   lastSession,
+  health,
   onGitScan,
   onRepoScan,
   onStartSession,
@@ -219,7 +243,9 @@ function ProjectCard({
   scanState: ScanState
   sessionState: SessionState
   lastSession: WorkSession | null
+  health: ProjectHealth | null
   onGitScan: () => void
+
   onRepoScan: () => void
   onStartSession: () => void
   onEndSession: (s: WorkSession) => void
@@ -244,7 +270,10 @@ function ProjectCard({
     <div className={`project-card${activeSession ? ' session-active' : ''}`}>
       <div className="project-card-header">
         <div>
-          <h3 className="project-name">{project.name}</h3>
+          <div className="project-name-row">
+            <h3 className="project-name">{project.name}</h3>
+            {health && <HealthBadge score={health.score} status={health.status} />}
+          </div>
           {project.description && <p className="project-desc">{project.description}</p>}
         </div>
         <button type="button" className="btn-ghost btn-sm" title="Archive project" onClick={onArchive}>

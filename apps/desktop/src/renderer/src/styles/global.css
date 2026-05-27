@@ -445,6 +445,28 @@ body {
 }
 .modal-body textarea:focus { border-color: var(--primary); }
 
+/* ── Health Badge ───────────────────────── */
+.project-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.health-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.health-healthy   { color: var(--success); background: rgba(34,197,94,0.12);  }
+.health-stalled   { color: var(--warning); background: rgba(245,158,11,0.12); }
+.health-risky     { color: #fb923c;        background: rgba(251,146,60,0.12); }
+.health-abandoned { color: var(--danger);  background: rgba(239,68,68,0.12);  }
+.health-unknown   { color: var(--text-muted); background: var(--surface-2);   }
+
 /* ── Continue Card ──────────────────────── */
 .continue-card {
   display: flex;
