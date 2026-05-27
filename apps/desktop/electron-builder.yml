@@ -11,6 +11,14 @@ files:
   - package.json
   - "!out/**/*.map"
 
+extraResources:
+  - from: ../../apps/api/dist
+    to: api
+  - from: ../../apps/api/node_modules
+    to: api/node_modules
+  - from: ../../prisma
+    to: prisma
+
 win:
   target:
     - target: nsis

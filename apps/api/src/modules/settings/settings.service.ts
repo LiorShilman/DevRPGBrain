@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
 
-// process.cwd() = apps/api when started via npm scripts
-const SETTINGS_PATH = join(process.cwd(), 'settings.json')
+// SETTINGS_PATH env lets packaged Electron point to AppData; otherwise cwd (apps/api in dev)
+const SETTINGS_PATH = process.env.SETTINGS_PATH ?? join(process.cwd(), 'settings.json')
 
 export interface AppSettings {
   aiProvider: 'mock' | 'openai' | 'claude'
