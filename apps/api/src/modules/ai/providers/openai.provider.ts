@@ -47,6 +47,12 @@ export class OpenAIProvider implements AIProvider {
     this.model = model
   }
 
+  private async throwOpenAIError(res: Response): Promise<never> {
+    const body = await res.json().catch(() => null)
+    const msg = body?.error?.message ?? res.statusText
+    throw new Error(`OpenAI ${res.status}: ${msg}`)
+  }
+
   private async chat(system: string, user: string, maxTokens = 500): Promise<string> {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -58,7 +64,7 @@ export class OpenAIProvider implements AIProvider {
         max_tokens: maxTokens,
       }),
     })
-    if (!res.ok) throw new Error(`OpenAI error: ${res.status} ${res.statusText}`)
+    if (!res.ok) return this.throwOpenAIError(res)
     const json = await res.json()
     return json.choices[0].message.content as string
   }
@@ -74,7 +80,7 @@ export class OpenAIProvider implements AIProvider {
         max_tokens: maxTokens,
       }),
     })
-    if (!res.ok) throw new Error(`OpenAI error: ${res.status} ${res.statusText}`)
+    if (!res.ok) return this.throwOpenAIError(res)
     const json = await res.json()
     return json.choices[0].message.content as string
   }

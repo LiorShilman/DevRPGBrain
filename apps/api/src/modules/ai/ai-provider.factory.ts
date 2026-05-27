@@ -22,11 +22,13 @@ export function getAIProvider(): AIProvider {
   if (provider === 'openai') {
     const key = settings.openAiApiKey ?? process.env.OPENAI_API_KEY
     if (!key) throw new Error('OpenAI API key is not configured. Add it in Settings.')
-    instance = new OpenAIProvider(key, settings.openAiModel || process.env.OPENAI_MODEL)
+    const model = settings.openAiModel || process.env.OPENAI_MODEL || undefined
+    instance = new OpenAIProvider(key, model)
   } else if (provider === 'claude') {
     const key = settings.claudeApiKey ?? process.env.ANTHROPIC_API_KEY
     if (!key) throw new Error('Claude API key is not configured. Add it in Settings.')
-    instance = new ClaudeProvider(key, settings.claudeModel || process.env.CLAUDE_MODEL)
+    const model = settings.claudeModel || process.env.CLAUDE_MODEL || undefined
+    instance = new ClaudeProvider(key, model)
   } else {
     instance = new MockAIProvider()
   }
