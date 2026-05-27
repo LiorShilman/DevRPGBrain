@@ -46,6 +46,13 @@ export default function Layout() {
         )}
         <div className="sidebar-bottom">
           <NavLink
+            to="/help"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <span className="nav-icon">?</span>
+            <span>עזרה</span>
+          </NavLink>
+          <NavLink
             to="/settings"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >

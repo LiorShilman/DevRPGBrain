@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage'
 import ProjectsPage from './pages/ProjectsPage'
 import RpgPage from './pages/RpgPage'
 import SettingsPage from './pages/SettingsPage'
+import HelpPage from './pages/HelpPage'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="rpg" element={<RpgPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="help" element={<HelpPage />} />
         </Route>
       </Routes>
     </HashRouter>

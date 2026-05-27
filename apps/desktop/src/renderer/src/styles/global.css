@@ -1328,3 +1328,161 @@ body {
   flex-shrink: 0;
 }
 .brain-send:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Help Page ───────────────────────────── */
+.help-page {
+  max-width: 960px;
+}
+
+.help-intro {
+  background: linear-gradient(135deg, rgba(56,189,248,0.06) 0%, rgba(167,139,250,0.06) 100%);
+  border: 1px solid rgba(56,189,248,0.15);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 28px;
+}
+
+.help-intro-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.help-card {
+  display: flex;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  transition: border-color 0.15s;
+}
+.help-card:hover { border-color: #2d3f55; }
+
+.help-card-icon {
+  font-size: 1.4rem;
+  color: var(--primary);
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+  padding-top: 2px;
+  line-height: 1;
+}
+
+.help-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.help-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.help-card-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.help-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.help-list li {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding-right: 14px;
+  position: relative;
+  line-height: 1.5;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.help-list li::before {
+  content: '›';
+  position: absolute;
+  right: 0;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.help-list li strong { color: var(--text); }
+
+.help-key {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: var(--primary);
+  line-height: 1.6;
+}
+
+.help-list code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.8rem;
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: var(--accent);
+}
+
+/* health grid inside help card */
+.help-health-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.help-health-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.help-health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.help-health-dot.healthy   { background: var(--success); }
+.help-health-dot.stalled   { background: var(--warning); }
+.help-health-dot.risky     { background: #fb923c; }
+.help-health-dot.abandoned { background: var(--danger); }
+
+.help-health-item strong { color: var(--text); }
+.help-health-item p { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+
+.help-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 16px 0 8px;
+  border-top: 1px solid var(--border);
+}
