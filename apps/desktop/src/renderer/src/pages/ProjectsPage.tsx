@@ -177,7 +177,7 @@ function SessionTimer({ startedAt }: { startedAt: string }) {
     const start = new Date(startedAt).getTime()
     const tick = () => setElapsed(Math.floor((Date.now() - start) / 1000))
     tick()
-    const id = setInterval(tick, 10000)
+    const id = setInterval(tick, 60000)
     return () => clearInterval(id)
   }, [startedAt])
 
