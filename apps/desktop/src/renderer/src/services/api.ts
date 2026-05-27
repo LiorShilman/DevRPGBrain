@@ -180,6 +180,25 @@ export const rpgApi = {
   getAchievements: () => request<Achievement[]>('/api/rpg/achievements'),
 }
 
+export interface AppSettings {
+  aiProvider: 'mock' | 'openai' | 'claude'
+  hasOpenAiKey: boolean
+  openAiModel: string
+  hasClaudeKey: boolean
+  claudeModel: string
+}
+
+export const settingsApi = {
+  get: () => request<AppSettings>('/api/settings'),
+  update: (data: {
+    aiProvider?: 'mock' | 'openai' | 'claude'
+    openAiApiKey?: string
+    openAiModel?: string
+    claudeApiKey?: string
+    claudeModel?: string
+  }) => request<AppSettings>('/api/settings', { method: 'PUT', body: JSON.stringify(data) }),
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string

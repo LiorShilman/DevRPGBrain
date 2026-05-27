@@ -1,0 +1,35 @@
+appId: com.devrpg.brain
+productName: DevRPG Brain
+copyright: Copyright © 2025
+
+directories:
+  buildResources: build-resources
+  output: release
+
+files:
+  - out/**/*
+  - package.json
+  - "!out/**/*.map"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: DevRPG-Brain-Setup-${version}.exe
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DevRPG Brain
+
+mac:
+  target: dmg
+  category: public.app-category.developer-tools
+
+linux:
+  target: AppImage
+
+publish: null

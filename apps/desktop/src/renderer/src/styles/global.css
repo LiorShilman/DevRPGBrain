@@ -131,6 +131,11 @@ body {
   color: var(--text-muted);
 }
 
+.sidebar-bottom {
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+
 .main-content {
   flex: 1;
   overflow-y: auto;
@@ -1063,6 +1068,101 @@ body {
   border-radius: 6px;
   padding: 10px 14px;
   font-size: 0.85rem;
+}
+
+/* ── Settings Page ──────────────────────── */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 600px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-section-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.provider-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.provider-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.provider-card:hover { border-color: #3d5268; }
+.provider-card.selected { border-color: var(--primary); background: rgba(56,189,248,0.05); }
+
+.provider-card-check {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.provider-card.selected .provider-card-check { color: var(--primary); }
+
+.provider-card-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.provider-card-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.settings-key-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--success);
+  margin-left: 6px;
+}
+
+.settings-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.settings-saved {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--success);
 }
 
 /* ── Project Brain Modal ─────────────────── */

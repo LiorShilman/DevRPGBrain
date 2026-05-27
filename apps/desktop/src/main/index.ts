@@ -9,6 +9,7 @@ function createWindow(): void {
     minHeight: 600,
     backgroundColor: '#0f172a',
     show: false,
+    title: 'DevRPG Brain',
     titleBarStyle: 'default',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -20,6 +21,9 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+    if (!app.isPackaged) {
+      mainWindow.setTitle('DevRPG Brain — dev')
+    }
   })
 
   // Open external links in default browser, not Electron

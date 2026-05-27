@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { rpgApi, RpgProfile } from '../services/api'
 
-const navItems = [
+const mainNavItems = [
   { to: '/', label: 'Dashboard', icon: '⊞' },
   { to: '/projects', label: 'Projects', icon: '◫' },
   { to: '/rpg', label: 'RPG', icon: '⚔' },
@@ -23,7 +23,7 @@ export default function Layout() {
           <span className="brand-name">DevRPG</span>
         </div>
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
+          {mainNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -44,6 +44,15 @@ export default function Layout() {
             <div className="xp-label">{profile.xpProgress} / {profile.xpNeeded} XP</div>
           </div>
         )}
+        <div className="sidebar-bottom">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <span className="nav-icon">⚙</span>
+            <span>Settings</span>
+          </NavLink>
+        </div>
       </aside>
       <main className="main-content">
         <Outlet />
