@@ -1,14 +1,10 @@
-import type { AIProvider, SessionSummaryInput, SessionSummaryOutput } from '../ai-provider.interface'
+import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput } from '../ai-provider.interface'
 
-const SYSTEM_PROMPT = `You are a developer productivity assistant. Analyze the session data and respond with a JSON object only — no markdown, no explanation.
+const SESSION_PROMPT = `You are a developer productivity assistant. Analyze the session data and respond with a JSON object only — no markdown, no explanation.
+Schema: {"summary":"2-3 sentence summary","keyDecisions":[],"extractedBlockers":[],"extractedNextSteps":[]}`
 
-Schema:
-{
-  "summary": "2-3 sentence summary of what was accomplished",
-  "keyDecisions": ["decision 1", "decision 2"],
-  "extractedBlockers": ["blocker 1"],
-  "extractedNextSteps": ["next step 1"]
-}`
+const BRIEFING_PROMPT = `You are a developer productivity coach. Given the developer's projects, generate a daily briefing. Respond with JSON only — no markdown.
+Schema: {"recommendedProject":"project name","why":"1-2 sentences why this project","risk":"1 sentence risk if skipped (empty string if no risk)","suggestedAction":"concrete next action","xpReward":number}`
 
 export class ClaudeProvider implements AIProvider {
   private apiKey: string
@@ -19,36 +15,24 @@ export class ClaudeProvider implements AIProvider {
     this.model = model
   }
 
-  async summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput> {
-    const userContent = JSON.stringify({
-      project: input.projectName,
-      durationMinutes: input.durationMinutes,
-      userNotes: input.userNotes,
-      blockers: input.blockers,
-      nextSteps: input.nextSteps,
-      changedFiles: input.changedFiles ?? [],
-      commitMessages: input.commitMessages ?? [],
-    })
-
+  private async message(system: string, user: string, maxTokens = 500): Promise<string> {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: this.model,
-        max_tokens: 500,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userContent }],
-      }),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': this.apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: this.model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: user }] }),
     })
-
     if (!res.ok) throw new Error(`Claude error: ${res.status} ${res.statusText}`)
-
     const json = await res.json()
-    const text: string = json.content[0].text
+    return json.content[0].text as string
+  }
+
+  async summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput> {
+    const text = await this.message(SESSION_PROMPT, JSON.stringify(input))
     return JSON.parse(text) as SessionSummaryOutput
+  }
+
+  async createDailyBriefing(input: DailyBriefingInput): Promise<DailyBriefingOutput> {
+    const text = await this.message(BRIEFING_PROMPT, JSON.stringify(input), 400)
+    return JSON.parse(text) as DailyBriefingOutput
   }
 }

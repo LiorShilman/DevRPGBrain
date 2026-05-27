@@ -154,6 +154,20 @@ export interface ProjectHealth {
   calculatedAt: string
 }
 
+export interface DailyBriefing {
+  recommendedProject: string
+  why: string
+  risk: string
+  suggestedAction: string
+  xpReward: number
+  generatedAt: string
+  projectCount: number
+}
+
+export const briefingApi = {
+  get: () => request<DailyBriefing>('/api/briefing'),
+}
+
 export const healthApi = {
   calculate: (projectId: string) =>
     request<ProjectHealth>(`/api/projects/${projectId}/health/calculate`, { method: 'POST' }),

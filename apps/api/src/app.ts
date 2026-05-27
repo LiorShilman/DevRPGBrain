@@ -6,6 +6,7 @@ import { scanRouter } from './modules/scans/repo-scanner.controller'
 import { sessionRouter } from './modules/sessions/session.controller'
 import { rpgRouter } from './modules/rpg/rpg.controller'
 import { healthRouter } from './modules/health/health.controller'
+import { briefingRouter } from './modules/briefing/briefing.controller'
 
 const app = express()
 
@@ -22,6 +23,7 @@ app.use('/api/projects/:id', scanRouter)
 app.use('/api/projects/:id', sessionRouter)
 app.use('/api/rpg', rpgRouter)
 app.use('/api/projects/:id', healthRouter)
+app.use('/api/briefing', briefingRouter)
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

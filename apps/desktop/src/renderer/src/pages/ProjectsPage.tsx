@@ -397,19 +397,19 @@ function ProjectCard({
           )}
           <button
             type="button"
-            className="btn-ghost btn-sm"
+            className="btn-icon"
             onClick={onGitScan}
             disabled={gitState.status === 'scanning'}
-            title="Scan Git repository"
+            title="Scan Git"
           >
             {gitState.status === 'scanning' ? '⟳' : '⎇'}
           </button>
           <button
             type="button"
-            className="btn-ghost btn-sm"
+            className="btn-icon"
             onClick={onRepoScan}
             disabled={scanState.status === 'scanning'}
-            title="Scan repository files"
+            title="Scan files"
           >
             {scanState.status === 'scanning' ? '⟳' : '⊞'}
           </button>
