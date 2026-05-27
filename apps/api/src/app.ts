@@ -13,7 +13,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 })
 
 app.use('/api/projects', projectRouter)
-app.use('/api/projects', gitRouter)
+app.use('/api/projects/:id', gitRouter)
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
