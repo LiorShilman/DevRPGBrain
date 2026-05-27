@@ -14,6 +14,7 @@ export default function ProjectsPage() {
   const [scanStates, setScanStates] = useState<Record<string, ScanState>>({})
   const [sessionStates, setSessionStates] = useState<Record<string, SessionState>>({})
   const [endingSession, setEndingSession] = useState<{ projectId: string; session: WorkSession } | null>(null)
+  const [completedSession, setCompletedSession] = useState<WorkSession | null>(null)
 
   useEffect(() => {
     loadProjects()
@@ -85,9 +86,10 @@ export default function ProjectsPage() {
     if (!endingSession) return
     const { projectId, session } = endingSession
     try {
-      await sessionsApi.end(projectId, session.id, data)
+      const ended = await sessionsApi.end(projectId, session.id, data)
       setSessionStates((prev) => ({ ...prev, [projectId]: { status: 'idle' } }))
       setEndingSession(null)
+      setCompletedSession(ended)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to end session'
       setError(message)
@@ -152,6 +154,13 @@ export default function ProjectsPage() {
             setProjects((prev) => [p, ...prev])
             setShowForm(false)
           }}
+        />
+      )}
+
+      {completedSession && (
+        <SessionSummaryModal
+          session={completedSession}
+          onClose={() => setCompletedSession(null)}
         />
       )}
 
@@ -426,6 +435,53 @@ function EndSessionModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function SessionSummaryModal({ session, onClose }: { session: WorkSession; onClose: () => void }) {
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal modal-lg">
+        <div className="modal-header">
+          <h2>Session Complete</h2>
+          <span className="session-duration">{session.durationMinutes}m</span>
+          <button type="button" className="btn-ghost" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          {session.aiSummary && (
+            <div className="summary-block">
+              <p className="summary-label">AI Summary</p>
+              <p className="summary-text">{session.aiSummary}</p>
+            </div>
+          )}
+          {session.userNotes && (
+            <div className="summary-block">
+              <p className="summary-label">Your notes</p>
+              <p className="summary-text">{session.userNotes}</p>
+            </div>
+          )}
+          {session.blockers.length > 0 && (
+            <div className="summary-block">
+              <p className="summary-label">Blockers</p>
+              <ul className="summary-list">
+                {session.blockers.map((b, i) => <li key={i}>{b}</li>)}
+              </ul>
+            </div>
+          )}
+          {session.nextSteps.length > 0 && (
+            <div className="summary-block">
+              <p className="summary-label">Next steps</p>
+              <ul className="summary-list">
+                {session.nextSteps.map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            </div>
+          )}
+          <div className="modal-footer">
+            <button type="button" className="btn-primary" onClick={onClose}>Done</button>
+          </div>
+        </div>
       </div>
     </div>
   )

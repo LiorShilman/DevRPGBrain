@@ -1,4 +1,5 @@
 import { prisma } from '../../db/client'
+import { getAIProvider } from '../ai/ai-provider.factory'
 import type { StartSessionInput, EndSessionInput } from './session.types'
 
 type RawSession = Awaited<ReturnType<typeof prisma.workSession.findFirst>>
@@ -29,12 +30,31 @@ export async function startSession(input: StartSessionInput) {
 }
 
 export async function endSession(sessionId: string, input: EndSessionInput) {
-  const session = await prisma.workSession.findUnique({ where: { id: sessionId } })
+  const session = await prisma.workSession.findUnique({
+    where: { id: sessionId },
+    include: { project: true },
+  })
   if (!session) throw new Error('Session not found')
   if (session.endedAt) throw new Error('Session already ended')
 
   const endedAt = new Date()
   const durationMinutes = Math.max(1, Math.round((endedAt.getTime() - session.startedAt.getTime()) / 60000))
+
+  // Run AI summary (non-blocking failure — never fail session end because of AI)
+  let aiSummary: string | null = null
+  try {
+    const ai = getAIProvider()
+    const result = await ai.summarizeSession({
+      projectName: session.project.name,
+      durationMinutes,
+      userNotes: input.userNotes ?? '',
+      blockers: input.blockers ?? [],
+      nextSteps: input.nextSteps ?? [],
+    })
+    aiSummary = result.summary
+  } catch (err) {
+    console.warn('[AI] summarizeSession failed:', err instanceof Error ? err.message : err)
+  }
 
   const updated = await prisma.workSession.update({
     where: { id: sessionId },
@@ -45,6 +65,7 @@ export async function endSession(sessionId: string, input: EndSessionInput) {
       blockers:  JSON.stringify(input.blockers  ?? []),
       decisions: JSON.stringify(input.decisions ?? []),
       nextSteps: JSON.stringify(input.nextSteps ?? []),
+      aiSummary,
     },
   })
   return parseSession(updated)

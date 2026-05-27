@@ -408,6 +408,56 @@ body {
 }
 .modal-body textarea:focus { border-color: var(--primary); }
 
+/* ── Session Summary ────────────────────── */
+.summary-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.summary-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.summary-text {
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.summary-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-list li {
+  font-size: 0.85rem;
+  color: var(--text);
+  padding-left: 12px;
+  position: relative;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.summary-list li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+}
+
 /* ── Modal ──────────────────────────────── */
 .modal-overlay {
   position: fixed;
