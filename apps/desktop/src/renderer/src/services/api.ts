@@ -180,6 +180,19 @@ export const rpgApi = {
   getAchievements: () => request<Achievement[]>('/api/rpg/achievements'),
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export const brainApi = {
+  chat: (projectId: string, question: string, history: ChatMessage[]) =>
+    request<{ reply: string }>(`/api/projects/${projectId}/brain/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ question, history }),
+    }),
+}
+
 export const projectsApi = {
   list: () => request<Project[]>('/api/projects'),
   get: (id: string) => request<Project>(`/api/projects/${id}`),

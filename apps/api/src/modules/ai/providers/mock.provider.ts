@@ -1,4 +1,4 @@
-import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput } from '../ai-provider.interface'
+import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput } from '../ai-provider.interface'
 
 export class MockAIProvider implements AIProvider {
   async summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput> {
@@ -19,5 +19,17 @@ export class MockAIProvider implements AIProvider {
       suggestedAction: top.nextSteps[0] ?? 'Start a new session and pick up where you left off.',
       xpReward: top.xpPotential,
     }
+  }
+
+  async chatWithProject(input: ProjectChatInput): Promise<ProjectChatOutput> {
+    const sessionCount = input.recentSessions.length
+    const lastNext = input.recentSessions[0]?.nextSteps[0]
+    const parts: string[] = [`[Mock Brain for ${input.projectName}]`]
+    if (sessionCount > 0) parts.push(`You have ${sessionCount} recorded session${sessionCount !== 1 ? 's' : ''}.`)
+    if (lastNext) parts.push(`Last planned next step: "${lastNext}".`)
+    if (input.health) parts.push(`Health: ${input.health.status} (${input.health.score}/100).`)
+    parts.push(`You asked: "${input.question}"`)
+    parts.push('Set AI_PROVIDER=openai or AI_PROVIDER=claude and add an API key to get real answers.')
+    return { reply: parts.join(' ') }
   }
 }

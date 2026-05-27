@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { projectsApi, gitApi, scanApi, sessionsApi, healthApi, Project, GitScanResult, ScanResult, WorkSession, ProjectHealth } from '../services/api'
+import { projectsApi, gitApi, scanApi, sessionsApi, healthApi, brainApi, Project, GitScanResult, ScanResult, WorkSession, ProjectHealth, ChatMessage } from '../services/api'
 
 type GitState     = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: GitScanResult } | { status: 'error'; message: string }
 type ScanState    = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: ScanResult }    | { status: 'error'; message: string }
@@ -17,6 +17,7 @@ export default function ProjectsPage() {
   const [completedSession, setCompletedSession] = useState<WorkSession | null>(null)
   const [lastSessions, setLastSessions] = useState<Record<string, WorkSession>>({})
   const [healthScores, setHealthScores] = useState<Record<string, ProjectHealth>>({})
+  const [brainProject, setBrainProject] = useState<Project | null>(null)
 
   useEffect(() => {
     loadProjects()
@@ -159,6 +160,7 @@ export default function ProjectsPage() {
               onStartSession={() => handleStartSession(p)}
               onEndSession={(s) => handleEndSessionRequest(p, s)}
               onArchive={() => handleArchive(p.id)}
+              onBrain={() => setBrainProject(p)}
             />
           ))}
         </div>
@@ -190,6 +192,13 @@ export default function ProjectsPage() {
             setEndingSession(null)
           }}
           onSubmit={handleEndSessionSubmit}
+        />
+      )}
+
+      {brainProject && (
+        <ProjectBrainModal
+          project={brainProject}
+          onClose={() => setBrainProject(null)}
         />
       )}
     </div>
@@ -237,6 +246,7 @@ function ProjectCard({
   onStartSession,
   onEndSession,
   onArchive,
+  onBrain,
 }: {
   project: Project
   gitState: GitState
@@ -245,11 +255,11 @@ function ProjectCard({
   lastSession: WorkSession | null
   health: ProjectHealth | null
   onGitScan: () => void
-
   onRepoScan: () => void
   onStartSession: () => void
   onEndSession: (s: WorkSession) => void
   onArchive: () => void
+  onBrain: () => void
 }) {
   const lastOpened = project.lastOpenedAt
     ? new Date(project.lastOpenedAt).toLocaleDateString()
@@ -286,7 +296,7 @@ function ProjectCard({
           <span className="session-indicator">● Session active — <SessionTimer startedAt={activeSession.startedAt} /></span>
           <button
             type="button"
-            className="btn-danger btn-sm"
+            className="btn-danger"
             onClick={() => onEndSession(activeSession)}
             disabled={sessionState.status === 'ending'}
           >
@@ -302,7 +312,7 @@ function ProjectCard({
               Last session {daysSince === 0 ? 'today' : daysSince === 1 ? 'yesterday' : `${daysSince}d ago`}
               {lastSession.durationMinutes ? ` · ${lastSession.durationMinutes}m` : ''}
             </span>
-            <button type="button" className="btn-continue btn-sm" onClick={onStartSession}
+            <button type="button" className="btn-continue" onClick={onStartSession}
               disabled={sessionState.status === 'starting'}>
               ▶ Continue
             </button>
@@ -387,7 +397,7 @@ function ProjectCard({
           {!activeSession && (
             <button
               type="button"
-              className="btn-success btn-sm"
+              className="btn-success"
               onClick={onStartSession}
               disabled={sessionState.status === 'starting'}
               title="Start a work session"
@@ -397,7 +407,15 @@ function ProjectCard({
           )}
           <button
             type="button"
-            className="btn-icon"
+            className="btn-icon btn-icon-brain"
+            onClick={onBrain}
+            title="Ask Project Brain"
+          >
+            ◈
+          </button>
+          <button
+            type="button"
+            className="btn-icon btn-icon-git"
             onClick={onGitScan}
             disabled={gitState.status === 'scanning'}
             title="Scan Git"
@@ -406,7 +424,7 @@ function ProjectCard({
           </button>
           <button
             type="button"
-            className="btn-icon"
+            className="btn-icon btn-icon-scan"
             onClick={onRepoScan}
             disabled={scanState.status === 'scanning'}
             title="Scan files"
@@ -566,6 +584,103 @@ function SessionSummaryModal({ session, onClose }: { session: WorkSession; onClo
             <button type="button" className="btn-primary" onClick={onClose}>Done</button>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function ProjectBrainModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  const [history, setHistory] = useState<ChatMessage[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [history])
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault()
+    const q = input.trim()
+    if (!q || loading) return
+    const userMsg: ChatMessage = { role: 'user', content: q }
+    setHistory((prev) => [...prev, userMsg])
+    setInput('')
+    setLoading(true)
+    setError(null)
+    try {
+      const { reply } = await brainApi.chat(project.id, q, history)
+      setHistory((prev) => [...prev, { role: 'assistant', content: reply }])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Brain error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend(e as unknown as React.FormEvent)
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal modal-brain">
+        <div className="modal-header">
+          <div className="brain-title">
+            <span className="brain-icon">◈</span>
+            <span>Project Brain — {project.name}</span>
+          </div>
+          <button type="button" className="btn-ghost" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="brain-messages">
+          {history.length === 0 && (
+            <div className="brain-empty">
+              <p className="brain-empty-hint">Ask anything about this project — context, next steps, decisions, blockers.</p>
+              <div className="brain-suggestions">
+                {['What should I work on next?', 'What were the last blockers?', "Summarize where I left off"].map((s) => (
+                  <button key={s} type="button" className="brain-suggestion" onClick={() => setInput(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {history.map((msg, i) => (
+            <div key={i} className={`brain-msg brain-msg-${msg.role}`}>
+              <span className="brain-msg-label">{msg.role === 'user' ? 'You' : '◈ Brain'}</span>
+              <p className="brain-msg-text">{msg.content}</p>
+            </div>
+          ))}
+          {loading && (
+            <div className="brain-msg brain-msg-assistant brain-thinking">
+              <span className="brain-msg-label">◈ Brain</span>
+              <p className="brain-msg-text">Thinking…</p>
+            </div>
+          )}
+          {error && <p className="brain-error">{error}</p>}
+          <div ref={bottomRef} />
+        </div>
+
+        <form onSubmit={handleSend} className="brain-input-row">
+          <textarea
+            ref={inputRef}
+            className="brain-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask your Project Brain… (Enter to send, Shift+Enter for newline)"
+            rows={2}
+            disabled={loading}
+          />
+          <button type="submit" className="btn-primary brain-send" disabled={loading || !input.trim()}>
+            ↑
+          </button>
+        </form>
       </div>
     </div>
   )

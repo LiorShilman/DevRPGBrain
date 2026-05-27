@@ -7,6 +7,7 @@ import { sessionRouter } from './modules/sessions/session.controller'
 import { rpgRouter } from './modules/rpg/rpg.controller'
 import { healthRouter } from './modules/health/health.controller'
 import { briefingRouter } from './modules/briefing/briefing.controller'
+import { brainRouter } from './modules/brain/brain.controller'
 
 const app = express()
 
@@ -24,6 +25,7 @@ app.use('/api/projects/:id', sessionRouter)
 app.use('/api/rpg', rpgRouter)
 app.use('/api/projects/:id', healthRouter)
 app.use('/api/briefing', briefingRouter)
+app.use('/api/projects/:id', brainRouter)
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

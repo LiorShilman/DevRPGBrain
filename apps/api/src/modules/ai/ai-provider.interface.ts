@@ -40,7 +40,37 @@ export interface DailyBriefingOutput {
   xpReward: number
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface ProjectChatInput {
+  projectName: string
+  projectDescription: string | null
+  language: string | null
+  framework: string | null
+  isGitRepo: boolean
+  gitBranch: string | null
+  lastCommitMessage: string | null
+  recentSessions: {
+    summary: string | null
+    nextSteps: string[]
+    blockers: string[]
+    durationMinutes: number | null
+    endedAt: string | null
+  }[]
+  health: { score: number; status: string; recommendations: string[] } | null
+  history: ChatMessage[]
+  question: string
+}
+
+export interface ProjectChatOutput {
+  reply: string
+}
+
 export interface AIProvider {
   summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput>
   createDailyBriefing(input: DailyBriefingInput): Promise<DailyBriefingOutput>
+  chatWithProject(input: ProjectChatInput): Promise<ProjectChatOutput>
 }
