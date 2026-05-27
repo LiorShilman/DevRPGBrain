@@ -80,7 +80,17 @@ export interface WorkSession {
   xpAwarded: number
   leveledUp?: boolean
   newLevel?: number
+  newAchievements?: string[]
   createdAt: string
+}
+
+export interface Achievement {
+  key: string
+  title: string
+  description: string
+  xpReward: number
+  unlocked: boolean
+  unlockedAt: string | null
 }
 
 export const sessionsApi = {
@@ -136,6 +146,7 @@ export interface RpgProfile {
 
 export const rpgApi = {
   getProfile: () => request<RpgProfile>('/api/rpg/profile'),
+  getAchievements: () => request<Achievement[]>('/api/rpg/achievements'),
 }
 
 export const projectsApi = {

@@ -541,6 +541,158 @@ body {
   padding: 2px 8px;
 }
 
+/* ── Achievement unlocks (in modal) ─────── */
+.achievement-unlocks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.achievement-unlock-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 6px;
+}
+
+.achievement-icon { font-size: 1rem; }
+
+.achievement-key {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--warning);
+  text-transform: capitalize;
+  flex: 1;
+}
+
+.achievement-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── RPG Page ───────────────────────────── */
+.rpg-level-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+}
+
+.rpg-level-num {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  min-width: 80px;
+}
+
+.rpg-level-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rpg-xp-bar-wrap {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rpg-xp-bar {
+  height: 100%;
+  width: var(--xp-w, 0%);
+  background: linear-gradient(90deg, var(--primary), #818cf8);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.rpg-xp-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rpg-total-xp {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.rpg-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.achievement-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  transition: border-color 0.15s;
+}
+
+.achievement-card.unlocked { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
+.achievement-card.locked   { opacity: 0.5; }
+
+.achievement-card-icon { font-size: 1.4rem; margin-top: 1px; }
+
+.achievement-card-body { display: flex; flex-direction: column; gap: 3px; }
+
+.achievement-card-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.achievement-card-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.achievement-card-date { font-size: 0.72rem; color: var(--text-dim); }
+.achievement-card-reward { font-size: 0.75rem; color: var(--primary); font-weight: 500; }
+
+.xp-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.xp-event-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--surface);
+  border-radius: 5px;
+  font-size: 0.82rem;
+}
+
+.xp-event-reason { color: var(--text-muted); }
+.xp-event-amount { color: var(--primary); font-weight: 600; }
+
 /* ── Session Summary ────────────────────── */
 .summary-block {
   display: flex;

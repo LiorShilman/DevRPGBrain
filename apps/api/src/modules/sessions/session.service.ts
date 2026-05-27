@@ -1,6 +1,7 @@
 import { prisma } from '../../db/client'
 import { getAIProvider } from '../ai/ai-provider.factory'
 import { awardXp, calcSessionXp } from '../rpg/rpg.service'
+import { checkSessionAchievements } from '../rpg/achievement.service'
 import type { StartSessionInput, EndSessionInput } from './session.types'
 
 type RawSession = Awaited<ReturnType<typeof prisma.workSession.findFirst>>
@@ -86,8 +87,22 @@ export async function endSession(sessionId: string, input: EndSessionInput) {
     },
   })
 
+  // Check achievements after XP is awarded
+  const completedSessions = await prisma.workSession.count({ where: { projectId: session.projectId, endedAt: { not: null } } })
+  const totalMinutesAgg = await prisma.workSession.aggregate({ where: { projectId: session.projectId, endedAt: { not: null } }, _sum: { durationMinutes: true } })
+  const newAchievements = await checkSessionAchievements({
+    sessionId,
+    projectId: session.projectId,
+    durationMinutes,
+    blockerCount: (input.blockers ?? []).length,
+    nextStepCount: (input.nextSteps ?? []).length,
+    totalSessions: completedSessions,
+    totalMinutes: totalMinutesAgg._sum.durationMinutes ?? 0,
+    currentLevel: newLevel,
+  })
+
   const parsed = parseSession(updated)
-  return { ...parsed, leveledUp, newLevel }
+  return { ...parsed, leveledUp, newLevel, newAchievements }
 }
 
 export async function getActiveSession(projectId: string) {

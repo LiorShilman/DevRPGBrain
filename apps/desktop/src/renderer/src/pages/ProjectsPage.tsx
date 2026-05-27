@@ -494,6 +494,17 @@ function SessionSummaryModal({ session, onClose }: { session: WorkSession; onClo
               <span className="xp-levelup">⬆ Level {session.newLevel}!</span>
             )}
           </div>
+          {session.newAchievements && session.newAchievements.length > 0 && (
+            <div className="achievement-unlocks">
+              {session.newAchievements.map((key) => (
+                <div key={key} className="achievement-unlock-badge">
+                  <span className="achievement-icon">🏆</span>
+                  <span className="achievement-key">{key.replace(/_/g, ' ')}</span>
+                  <span className="achievement-label">Unlocked!</span>
+                </div>
+              ))}
+            </div>
+          )}
           {session.aiSummary && (
             <div className="summary-block">
               <p className="summary-label">AI Summary</p>
