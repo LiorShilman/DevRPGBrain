@@ -11,6 +11,7 @@ import { brainRouter } from './modules/brain/brain.controller'
 import { globalBrainRouter } from './modules/brain/global-brain.controller'
 import { settingsRouter } from './modules/settings/settings.controller'
 import { importRouter } from './modules/import/import.controller'
+import { filesRouter } from './modules/files/files.controller'
 
 const app = express()
 
@@ -32,6 +33,7 @@ app.use('/api/projects/:id', brainRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/import', importRouter)
 app.use('/api/brain', globalBrainRouter)
+app.use('/api/projects/:id', filesRouter)
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

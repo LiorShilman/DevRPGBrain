@@ -75,3 +75,11 @@ export async function getRecentCommits(projectPath: string, limit = 10) {
     date: c.date,
   }))
 }
+
+export async function getLocalBranches(projectPath: string) {
+  const git = simpleGit(projectPath)
+  const isRepo = await git.checkIsRepo().catch(() => false)
+  if (!isRepo) throw new Error('Not a Git repository')
+  const b = await git.branchLocal()
+  return b.all.map((name) => ({ name, isCurrent: name === b.current }))
+}

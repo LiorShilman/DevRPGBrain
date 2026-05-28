@@ -95,9 +95,28 @@ export interface GlobalChatInput {
   question: string
 }
 
+export interface CodeAnalysisInput {
+  filePath: string
+  content: string
+  language: string
+  projectName: string
+  sectionName?: string
+  sectionType?: string
+}
+
+export interface CodeAnalysisOutput {
+  summary: string
+  howItWorks: string
+  keyDecisions: string[]
+  dependencies: string[]
+  suggestions: string[]
+}
+
 export interface AIProvider {
   summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput>
   createDailyBriefing(input: DailyBriefingInput): Promise<DailyBriefingOutput>
   chatWithProject(input: ProjectChatInput): Promise<ProjectChatOutput>
   chatGlobal(input: GlobalChatInput): Promise<ProjectChatOutput>
+  analyzeCode(input: CodeAnalysisInput): Promise<CodeAnalysisOutput>
+  analyzeCodeStream(input: CodeAnalysisInput, onChunk: (text: string) => void): Promise<void>
 }

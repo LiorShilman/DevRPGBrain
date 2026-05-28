@@ -130,6 +130,8 @@ export const scanApi = {
     request<DependencyData>(`/api/projects/${projectId}/dependencies`),
 }
 
+export interface BranchInfo { name: string; isCurrent: boolean }
+
 export const gitApi = {
   scan: (projectId: string) =>
     request<GitScanResult>(`/api/projects/${projectId}/git-scan`, { method: 'POST' }),
@@ -137,6 +139,8 @@ export const gitApi = {
     request<GitSnapshot>(`/api/projects/${projectId}/git`),
   getCommits: (projectId: string, limit = 10) =>
     request<CommitInfo[]>(`/api/projects/${projectId}/git/commits?limit=${limit}`),
+  getBranches: (projectId: string) =>
+    request<BranchInfo[]>(`/api/projects/${projectId}/git/branches`),
 }
 
 export interface RpgProfile {
@@ -261,6 +265,81 @@ export const importApi = {
       method: 'POST',
       body: JSON.stringify({ repos, baseDir, token: token || undefined }),
     }),
+}
+
+export interface FileNode {
+  name: string
+  path: string
+  type: 'file' | 'dir'
+  size?: number
+  ext?: string
+  children?: FileNode[]
+}
+
+export interface SearchResult {
+  path: string
+  name: string
+  score: number
+  matchType: 'name' | 'content'
+  lineNumber?: number
+  lineContent?: string
+}
+
+export interface CodeAnalysisOutput {
+  summary: string
+  howItWorks: string
+  keyDecisions: string[]
+  dependencies: string[]
+  suggestions: string[]
+}
+
+export const filesApi = {
+  getTree: (projectId: string) =>
+    request<FileNode[]>(`/api/projects/${projectId}/files`),
+  getContent: (projectId: string, filePath: string) =>
+    request<{ content: string; language: string; size: number }>(
+      `/api/projects/${projectId}/files/content?path=${encodeURIComponent(filePath)}`
+    ),
+  search: (projectId: string, q: string) =>
+    request<SearchResult[]>(`/api/projects/${projectId}/search?q=${encodeURIComponent(q)}`),
+  analyze: (projectId: string, filePath: string, content: string, language: string) =>
+    request<CodeAnalysisOutput>(`/api/projects/${projectId}/files/analyze`, {
+      method: 'POST',
+      body: JSON.stringify({ filePath, content, language }),
+    }),
+  async analyzeStream(
+    projectId: string,
+    params: { filePath: string; content: string; language: string; sectionName?: string; sectionType?: string },
+    onChunk: (text: string) => void
+  ): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}/files/analyze/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const reader = res.body?.getReader()
+    if (!reader) throw new Error('No response body')
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6)
+        if (data === '[DONE]') return
+        try {
+          const parsed = JSON.parse(data) as { text?: string; error?: string }
+          if (parsed.error) throw new Error(parsed.error)
+          if (parsed.text) onChunk(parsed.text)
+        } catch (e) { if (e instanceof Error) throw e }
+      }
+    }
+  },
 }
 
 export const projectsApi = {

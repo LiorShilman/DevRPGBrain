@@ -1,4 +1,6 @@
-import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput } from '../ai-provider.interface'
+import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput, CodeAnalysisInput, CodeAnalysisOutput } from '../ai-provider.interface'
+
+function sleep(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)) }
 
 export class MockAIProvider implements AIProvider {
   async summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput> {
@@ -42,5 +44,32 @@ export class MockAIProvider implements AIProvider {
     parts.push(`You asked: "${input.question}"`)
     parts.push('Set AI_PROVIDER=openai or AI_PROVIDER=claude and add an API key to get real answers.')
     return { reply: parts.join(' ') }
+  }
+
+  async analyzeCode(input: CodeAnalysisInput): Promise<CodeAnalysisOutput> {
+    return {
+      summary: `${input.filePath} — a ${input.language} file in project "${input.projectName}".`,
+      howItWorks: 'Mock mode is active. Configure AI_PROVIDER=claude or AI_PROVIDER=openai with a valid API key in Settings to get real code analysis.',
+      keyDecisions: ['Mock mode — no real analysis available'],
+      dependencies: [],
+      suggestions: ['Add an API key in Settings to unlock real AI code analysis'],
+    }
+  }
+
+  async analyzeCodeStream(input: CodeAnalysisInput, onChunk: (text: string) => void): Promise<void> {
+    const target = input.sectionName
+      ? `**${input.sectionName}** (${input.sectionType}) in \`${input.filePath}\``
+      : `file \`${input.filePath}\``
+    const lines = [
+      `**Summary**\nMock analysis for ${target} in project "${input.projectName}".`,
+      '\n\n**How it works**\nMock mode is active — configure an AI provider in Settings to get real streaming analysis.',
+      '\n\n**Key concepts**\n- Mock mode\n- No real analysis available',
+      '\n\n**Dependencies**\nNot available in mock mode.',
+      '\n\n**Potential issues**\n- Add an API key in Settings to unlock real AI code analysis.',
+    ]
+    for (const chunk of lines) {
+      onChunk(chunk)
+      await sleep(120)
+    }
   }
 }

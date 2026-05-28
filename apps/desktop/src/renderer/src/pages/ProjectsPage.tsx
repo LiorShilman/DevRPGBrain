@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { projectsApi, gitApi, scanApi, sessionsApi, healthApi, brainApi, importApi, settingsApi, Project, GitScanResult, ScanResult, WorkSession, ProjectHealth, ChatMessage, GitHubRepo, ImportResult } from '../services/api'
 
 const DependencyGraphModal = lazy(() => import('../components/DependencyGraph/DependencyGraphModal'))
@@ -8,6 +9,7 @@ type ScanState    = { status: 'idle' } | { status: 'scanning' } | { status: 'don
 type SessionState = { status: 'idle' } | { status: 'starting' } | { status: 'active'; session: WorkSession } | { status: 'ending'; session: WorkSession }
 
 export default function ProjectsPage() {
+  const navigate = useNavigate()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -19,8 +21,6 @@ export default function ProjectsPage() {
   const [completedSession, setCompletedSession] = useState<WorkSession | null>(null)
   const [lastSessions, setLastSessions] = useState<Record<string, WorkSession>>({})
   const [healthScores, setHealthScores] = useState<Record<string, ProjectHealth>>({})
-  const [brainProject, setBrainProject] = useState<Project | null>(null)
-  const [graphProject, setGraphProject] = useState<Project | null>(null)
   const [showGitHubImport, setShowGitHubImport] = useState(false)
   const [scanAllProgress, setScanAllProgress] = useState<{ done: number; total: number } | null>(null)
   const [sortBy, setSortBy] = useState<'lastOpened' | 'name' | 'lastSession'>('lastOpened')
@@ -254,8 +254,7 @@ export default function ProjectsPage() {
               onStartSession={() => handleStartSession(p)}
               onEndSession={(s) => handleEndSessionRequest(p, s)}
               onArchive={() => handleArchive(p.id)}
-              onBrain={() => setBrainProject(p)}
-              onGraph={() => setGraphProject(p)}
+              onOpen={() => navigate(`/projects/${p.id}`)}
             />
           ))}
         </div>
@@ -288,22 +287,6 @@ export default function ProjectsPage() {
           }}
           onSubmit={handleEndSessionSubmit}
         />
-      )}
-
-      {brainProject && (
-        <ProjectBrainModal
-          project={brainProject}
-          onClose={() => setBrainProject(null)}
-        />
-      )}
-
-      {graphProject && (
-        <Suspense fallback={null}>
-          <DependencyGraphModal
-            project={graphProject}
-            onClose={() => setGraphProject(null)}
-          />
-        </Suspense>
       )}
 
       {showGitHubImport && (
@@ -360,8 +343,7 @@ function ProjectCard({
   onStartSession,
   onEndSession,
   onArchive,
-  onBrain,
-  onGraph,
+  onOpen,
 }: {
   project: Project
   gitState: GitState
@@ -374,8 +356,7 @@ function ProjectCard({
   onStartSession: () => void
   onEndSession: (s: WorkSession) => void
   onArchive: () => void
-  onBrain: () => void
-  onGraph: () => void
+  onOpen: () => void
 }) {
   const lastOpened = project.lastOpenedAt
     ? new Date(project.lastOpenedAt).toLocaleDateString()
@@ -523,14 +504,13 @@ function ProjectCard({
             </button>
           ) : <div />}
           <div className="project-actions">
-            <button type="button" className="btn-icon btn-icon-brain" onClick={onBrain} title="Ask Project Brain">◈</button>
-            <button type="button" className="btn-icon btn-icon-graph" onClick={onGraph} title="Dependency graph">⬡</button>
             <button type="button" className="btn-icon btn-icon-git" onClick={onGitScan} disabled={gitState.status === 'scanning'} title="Scan Git">
               {gitState.status === 'scanning' ? '⟳' : '⎇'}
             </button>
             <button type="button" className="btn-icon btn-icon-scan" onClick={onRepoScan} disabled={scanState.status === 'scanning'} title="Scan files">
               {scanState.status === 'scanning' ? '⟳' : '⊞'}
             </button>
+            <button type="button" className="btn-primary btn-open" onClick={onOpen} title="Open project detail">Open →</button>
           </div>
         </div>
       </div>

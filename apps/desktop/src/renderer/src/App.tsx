@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from 'react'
+import { Component, lazy, Suspense, type ReactNode } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import DashboardPage from './pages/DashboardPage'
@@ -8,6 +8,8 @@ import SettingsPage from './pages/SettingsPage'
 import HelpPage from './pages/HelpPage'
 import GlobalBrainPage from './pages/GlobalBrainPage'
 import { GlobalBrainProvider } from './context/GlobalBrainContext'
+
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'))
 
 class RootErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
   state = { error: null }
@@ -35,6 +37,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<DashboardPage />} />
               <Route path="projects" element={<ProjectsPage />} />
+              <Route path="projects/:id" element={<Suspense fallback={null}><ProjectDetailPage /></Suspense>} />
               <Route path="brain" element={<GlobalBrainPage />} />
               <Route path="rpg" element={<RpgPage />} />
               <Route path="settings" element={<SettingsPage />} />
