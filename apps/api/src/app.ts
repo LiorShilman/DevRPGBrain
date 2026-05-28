@@ -8,6 +8,7 @@ import { rpgRouter } from './modules/rpg/rpg.controller'
 import { healthRouter } from './modules/health/health.controller'
 import { briefingRouter } from './modules/briefing/briefing.controller'
 import { brainRouter } from './modules/brain/brain.controller'
+import { globalBrainRouter } from './modules/brain/global-brain.controller'
 import { settingsRouter } from './modules/settings/settings.controller'
 import { importRouter } from './modules/import/import.controller'
 
@@ -30,6 +31,7 @@ app.use('/api/briefing', briefingRouter)
 app.use('/api/projects/:id', brainRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/import', importRouter)
+app.use('/api/brain', globalBrainRouter)
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

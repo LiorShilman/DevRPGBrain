@@ -1,4 +1,4 @@
-import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput } from '../ai-provider.interface'
+import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput } from '../ai-provider.interface'
 
 export class MockAIProvider implements AIProvider {
   async summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput> {
@@ -19,6 +19,17 @@ export class MockAIProvider implements AIProvider {
       suggestedAction: top.nextSteps[0] ?? 'Start a new session and pick up where you left off.',
       xpReward: top.xpPotential,
     }
+  }
+
+  async chatGlobal(input: GlobalChatInput): Promise<ProjectChatOutput> {
+    const risky = input.projects.filter((p) => p.healthStatus === 'RISKY' || p.healthStatus === 'ABANDONED')
+    const withBlockers = input.projects.filter((p) => p.openBlockers.length > 0)
+    const parts = [`[Mock Global Brain — ${input.projects.length} projects, Level ${input.rpgLevel}]`]
+    if (risky.length > 0) parts.push(`At-risk projects: ${risky.map((p) => p.name).join(', ')}.`)
+    if (withBlockers.length > 0) parts.push(`Projects with blockers: ${withBlockers.map((p) => p.name).join(', ')}.`)
+    parts.push(`You asked: "${input.question}"`)
+    parts.push('Set AI_PROVIDER=openai or claude and add an API key to get real cross-project analysis.')
+    return { reply: parts.join(' ') }
   }
 
   async chatWithProject(input: ProjectChatInput): Promise<ProjectChatOutput> {

@@ -5,6 +5,7 @@ import { rpgApi, RpgProfile } from '../services/api'
 const mainNavItems = [
   { to: '/', label: 'Dashboard', icon: '⊞' },
   { to: '/projects', label: 'Projects', icon: '◫' },
+  { to: '/brain', label: 'Global Brain', icon: '◈' },
   { to: '/rpg', label: 'RPG', icon: '⚔' },
 ]
 

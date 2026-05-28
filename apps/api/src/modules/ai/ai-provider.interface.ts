@@ -69,8 +69,33 @@ export interface ProjectChatOutput {
   reply: string
 }
 
+export interface GlobalChatProjectSummary {
+  name: string
+  description: string | null
+  language: string | null
+  framework: string | null
+  isGitRepo: boolean
+  isPrivate: boolean
+  healthScore: number | null
+  healthStatus: string | null
+  lastSessionDate: string | null
+  lastSessionSummary: string | null
+  openBlockers: string[]
+  nextSteps: string[]
+  sessionCount: number
+}
+
+export interface GlobalChatInput {
+  projects: GlobalChatProjectSummary[]
+  rpgLevel: number
+  totalXp: number
+  history: ChatMessage[]
+  question: string
+}
+
 export interface AIProvider {
   summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput>
   createDailyBriefing(input: DailyBriefingInput): Promise<DailyBriefingOutput>
   chatWithProject(input: ProjectChatInput): Promise<ProjectChatOutput>
+  chatGlobal(input: GlobalChatInput): Promise<ProjectChatOutput>
 }

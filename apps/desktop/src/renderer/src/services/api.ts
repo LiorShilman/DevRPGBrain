@@ -213,6 +213,11 @@ export const brainApi = {
       method: 'POST',
       body: JSON.stringify({ question, history }),
     }),
+  chatGlobal: (question: string, history: ChatMessage[]) =>
+    request<{ reply: string }>('/api/brain/chat', {
+      method: 'POST',
+      body: JSON.stringify({ question, history }),
+    }),
 }
 
 export interface GitHubRepo {

@@ -1743,3 +1743,38 @@ body {
   opacity: 0.65;
   flex-shrink: 0;
 }
+
+/* ── Global Brain Page ───────────────────── */
+.global-brain-page { max-width: 800px; display: flex; flex-direction: column; height: calc(100vh - 64px); }
+
+.global-brain-icon { color: var(--accent); }
+
+.global-brain-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+
+.global-brain-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 2px;
+}
+
+.global-suggestions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.global-brain-input-row { flex-shrink: 0; }
+
+/* sidebar accent for Global Brain */
+.nav-item[href*="brain"].active,
+.nav-item.active:has(span:first-child) { color: var(--accent); }

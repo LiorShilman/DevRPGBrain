@@ -1,4 +1,5 @@
-import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, ChatMessage } from '../ai-provider.interface'
+import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput, ChatMessage } from '../ai-provider.interface'
+import { buildGlobalBrainSystemPrompt } from '../prompts/global-brain.prompt'
 
 const SESSION_PROMPT = `You are a developer productivity assistant. Analyze the session data and respond with a JSON object only — no markdown, no explanation.
 Schema: {"summary":"2-3 sentence summary","keyDecisions":[],"extractedBlockers":[],"extractedNextSteps":[]}`
@@ -83,6 +84,13 @@ export class ClaudeProvider implements AIProvider {
     const system = buildBrainSystemPrompt(input)
     const messages: ChatMessage[] = [...input.history, { role: 'user', content: input.question }]
     const reply = await this.messageMulti(system, messages)
+    return { reply }
+  }
+
+  async chatGlobal(input: GlobalChatInput): Promise<ProjectChatOutput> {
+    const system = buildGlobalBrainSystemPrompt(input)
+    const messages: ChatMessage[] = [...input.history, { role: 'user', content: input.question }]
+    const reply = await this.messageMulti(system, messages, 900)
     return { reply }
   }
 }
