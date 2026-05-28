@@ -168,44 +168,54 @@ export default function ProjectsPage() {
           </p>
         </div>
         <div className="page-header-actions">
-          {scanAllProgress ? (
-            <span className="scan-all-progress">
-              ⟳ Scanning {scanAllProgress.done}/{scanAllProgress.total}
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="btn-ghost btn-sm"
-              onClick={handleScanAll}
-              disabled={projects.length === 0}
-              title="Scan all projects to detect language, framework, and TODO counts"
+          <div className="search-wrap">
+            <span className="search-icon">⌕</span>
+            <input
+              className="search-input"
+              type="search"
+              placeholder="Search projects…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="filter-group">
+            <select
+              className="sort-select"
+              title="Sort projects"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             >
-              ⊞ Scan All
+              <option value="lastOpened">Last opened</option>
+              <option value="name">Name A→Z</option>
+              <option value="lastSession">Last session</option>
+            </select>
+
+            {scanAllProgress ? (
+              <span className="scan-all-progress">
+                ⟳ {scanAllProgress.done}/{scanAllProgress.total}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="btn-icon btn-icon-scan"
+                onClick={handleScanAll}
+                disabled={projects.length === 0}
+                title="Scan all projects to detect language, framework, and TODO counts"
+              >
+                ⊞
+              </button>
+            )}
+          </div>
+
+          <div className="action-group">
+            <button type="button" className="btn-secondary" onClick={() => setShowGitHubImport(true)}>
+              ⬇ GitHub
             </button>
-          )}
-          <input
-            className="search-input"
-            type="search"
-            placeholder="Search projects…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <select
-            className="sort-select"
-            title="Sort projects"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          >
-            <option value="lastOpened">Last opened</option>
-            <option value="name">Name A→Z</option>
-            <option value="lastSession">Last session</option>
-          </select>
-          <button type="button" className="btn-secondary" onClick={() => setShowGitHubImport(true)}>
-            ⬇ Import GitHub
-          </button>
-          <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
-            + Add Project
-          </button>
+            <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+              + Add Project
+            </button>
+          </div>
         </div>
       </div>
 
