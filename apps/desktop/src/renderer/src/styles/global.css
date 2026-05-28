@@ -15,9 +15,9 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --accent: #a78bfa;
-  --text: #e5e7eb;
-  --text-muted: #6b7280;
-  --text-dim: #374151;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
   --sidebar-w: 200px;
 }
 
@@ -317,8 +317,8 @@ body {
 }
 
 .meta-badge {
-  background: var(--surface-2);
-  color: var(--text-muted);
+  background: #1e3a4a;
+  color: #7dd3fc;
   border-radius: 4px;
   padding: 2px 8px;
   font-size: 0.75rem;
@@ -327,7 +327,7 @@ body {
 
 .project-path {
   font-size: 0.75rem;
-  color: var(--text-dim);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
