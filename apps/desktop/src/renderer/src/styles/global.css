@@ -1778,3 +1778,9 @@ body {
 /* sidebar accent for Global Brain */
 .nav-item[href*="brain"].active,
 .nav-item.active:has(span:first-child) { color: var(--accent); }
+
+.scan-all-progress {
+  font-size: 0.8rem;
+  color: var(--primary);
+  white-space: nowrap;
+}

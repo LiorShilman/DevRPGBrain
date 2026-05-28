@@ -19,6 +19,7 @@ export default function ProjectsPage() {
   const [healthScores, setHealthScores] = useState<Record<string, ProjectHealth>>({})
   const [brainProject, setBrainProject] = useState<Project | null>(null)
   const [showGitHubImport, setShowGitHubImport] = useState(false)
+  const [scanAllProgress, setScanAllProgress] = useState<{ done: number; total: number } | null>(null)
   const [sortBy, setSortBy] = useState<'lastOpened' | 'name' | 'lastSession'>('lastOpened')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -118,6 +119,17 @@ export default function ProjectsPage() {
     }
   }
 
+  async function handleScanAll() {
+    if (scanAllProgress) return
+    setScanAllProgress({ done: 0, total: projects.length })
+    for (let i = 0; i < projects.length; i++) {
+      try { await scanApi.scan(projects[i].id) } catch { /* skip failed */ }
+      setScanAllProgress({ done: i + 1, total: projects.length })
+    }
+    await loadProjects()
+    setScanAllProgress(null)
+  }
+
   async function handleArchive(id: string) {
     await projectsApi.archive(id)
     setProjects((prev) => prev.filter((p) => p.id !== id))
@@ -156,6 +168,21 @@ export default function ProjectsPage() {
           </p>
         </div>
         <div className="page-header-actions">
+          {scanAllProgress ? (
+            <span className="scan-all-progress">
+              ⟳ Scanning {scanAllProgress.done}/{scanAllProgress.total}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="btn-ghost btn-sm"
+              onClick={handleScanAll}
+              disabled={projects.length === 0}
+              title="Scan all projects to detect language, framework, and TODO counts"
+            >
+              ⊞ Scan All
+            </button>
+          )}
           <input
             className="search-input"
             type="search"
