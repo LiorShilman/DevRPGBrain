@@ -25,3 +25,13 @@ scanRouter.get('/scan', async (req: Request, res: Response) => {
   if (!scan) return res.status(404).json({ error: 'No scan found. Run a scan first.' })
   res.json(scan)
 })
+
+// GET /api/projects/:id/dependencies
+scanRouter.get('/dependencies', async (req: Request, res: Response) => {
+  const raw = await getLatestScan(req.params.id)
+  if (!raw) return res.status(404).json({ error: 'No scan found. Run a scan first.' })
+  res.json({
+    importEdges: raw.importEdges ? JSON.parse(raw.importEdges) : [],
+    architecturePattern: raw.architecturePattern ? JSON.parse(raw.architecturePattern) : null,
+  })
+})

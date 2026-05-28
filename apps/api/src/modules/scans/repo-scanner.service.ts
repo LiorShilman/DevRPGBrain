@@ -4,6 +4,8 @@ import { join, relative, extname, basename } from 'path'
 import { Dirent } from 'fs'
 import { prisma } from '../../db/client'
 import type { ScanResult } from './repo-scanner.types'
+import { parseImports, type ImportEdge } from './import-parser'
+import { detectArchitecture } from './architecture-detector'
 
 const IGNORED_DIRS = new Set([
   'node_modules', 'dist', 'build', '.git', '.next', 'coverage',
@@ -159,6 +161,9 @@ async function detectFromPackageJson(pkgPaths: string[]): Promise<string[]> {
   return [...detected]
 }
 
+const PARSEABLE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.css', '.scss', '.less'])
+const MAX_IMPORT_FILE_SIZE = 200 * 1024
+
 export async function scanRepo(projectId: string, projectPath: string): Promise<ScanResult> {
   const fileNames = new Set<string>()
   const langCounts: Record<string, number> = {}
@@ -168,52 +173,64 @@ export async function scanRepo(projectId: string, projectPath: string): Promise<
   let fixmeCount = 0
   const todoPromises: Promise<{ todo: number; fixme: number }>[] = []
 
+  // Collect full paths + relative paths for import parsing
+  const allRelPaths = new Set<string>()
+  const parseableFiles: { fullPath: string; relPath: string }[] = []
+
   const fileCount = await walkDir(projectPath, (fullPath, relPath, entry) => {
+    const relUnix = relPath.replace(/\\/g, '/')
     fileNames.add(entry.name)
+    allRelPaths.add(relUnix)
     if (entry.name === 'package.json') pkgJsonPaths.push(fullPath)
 
     const ext = extname(entry.name).toLowerCase()
     const lang = LANGUAGE_EXTENSIONS[ext]
     if (lang) langCounts[lang] = (langCounts[lang] ?? 0) + 1
 
-    if (IMPORTANT_FILES.has(entry.name)) {
-      importantFiles.push(relPath.replace(/\\/g, '/'))
-    }
+    if (IMPORTANT_FILES.has(entry.name)) importantFiles.push(relUnix)
 
-    if (TEXT_EXTENSIONS.has(ext)) {
-      todoPromises.push(countTodoFixme(fullPath))
-    }
+    if (TEXT_EXTENSIONS.has(ext)) todoPromises.push(countTodoFixme(fullPath))
+
+    if (PARSEABLE_EXTENSIONS.has(ext)) parseableFiles.push({ fullPath, relPath: relUnix })
   })
 
   // Resolve TODO/FIXME counts in parallel
   const todoCounts = await Promise.all(todoPromises)
-  for (const { todo, fixme } of todoCounts) {
-    todoCount += todo
-    fixmeCount += fixme
-  }
+  for (const { todo, fixme } of todoCounts) { todoCount += todo; fixmeCount += fixme }
 
-  // Detect stack from config files found
+  // Detect stack from config files
   const detectedStackSet = new Set<string>()
-
   for (const detector of STACK_DETECTORS) {
     const hit = detector.files.some((f) =>
-      f.includes('*')
-        ? [...fileNames].some((name) => name.endsWith(f.replace('*', '')))
-        : fileNames.has(f)
+      f.includes('*') ? [...fileNames].some((name) => name.endsWith(f.replace('*', ''))) : fileNames.has(f)
     )
     if (hit) detectedStackSet.add(detector.name)
   }
-
-  // Also detect from all package.json files (including workspaces)
   const pkgFrameworks = await detectFromPackageJson(pkgJsonPaths)
   for (const f of pkgFrameworks) detectedStackSet.add(f)
 
-  // Detected languages = those with at least 1 file, sorted by count desc
-  const detectedLanguages = Object.entries(langCounts)
-    .sort(([, a], [, b]) => b - a)
-    .map(([lang]) => lang)
-
+  const detectedLanguages = Object.entries(langCounts).sort(([, a], [, b]) => b - a).map(([lang]) => lang)
   const detectedStack = [...detectedStackSet]
+
+  // Parse imports for dependency graph (skip if too many files)
+  let importEdges: ImportEdge[] = []
+  if (parseableFiles.length <= 2000) {
+    const edgePromises = parseableFiles.map(async ({ fullPath, relPath }) => {
+      try {
+        const stat = await fs.stat(fullPath)
+        if (stat.size > MAX_IMPORT_FILE_SIZE) return []
+        const content = await fs.readFile(fullPath, 'utf-8')
+        return parseImports(relPath, content, allRelPaths)
+      } catch {
+        return []
+      }
+    })
+    const edgeArrays = await Promise.all(edgePromises)
+    importEdges = edgeArrays.flat()
+  }
+
+  // Architecture detection
+  const archPattern = detectArchitecture([...allRelPaths])
 
   await prisma.repoScan.create({
     data: {
@@ -224,6 +241,8 @@ export async function scanRepo(projectId: string, projectPath: string): Promise<
       todoCount,
       fixmeCount,
       fileCount,
+      importEdges: JSON.stringify(importEdges),
+      architecturePattern: JSON.stringify(archPattern),
     },
   })
 

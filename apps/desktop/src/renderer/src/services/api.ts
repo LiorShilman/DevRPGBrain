@@ -113,11 +113,21 @@ export const sessionsApi = {
     request<WorkSession[]>(`/api/projects/${projectId}/sessions`),
 }
 
+export interface ImportEdge { source: string; target: string }
+export interface ArchComponent { id: string; type: string; label: string; tech: string; icon: string; fileCount: number }
+export interface ArchConnection { from: string; to: string; label: string; protocol: string }
+export interface DependencyData {
+  importEdges: ImportEdge[]
+  architecturePattern: { components: ArchComponent[]; connections: ArchConnection[] } | null
+}
+
 export const scanApi = {
   scan: (projectId: string) =>
     request<ScanResult>(`/api/projects/${projectId}/scan`, { method: 'POST' }),
   getLatest: (projectId: string) =>
     request<ScanResult>(`/api/projects/${projectId}/scan`),
+  getDependencies: (projectId: string) =>
+    request<DependencyData>(`/api/projects/${projectId}/dependencies`),
 }
 
 export const gitApi = {

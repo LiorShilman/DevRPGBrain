@@ -43,16 +43,18 @@ model GitSnapshot {
 }
 
 model RepoScan {
-  id                String   @id @default(uuid())
-  projectId         String
-  detectedStack     String   @default("[]")
-  detectedLanguages String   @default("[]")
-  importantFiles    String   @default("[]")
-  todoCount         Int      @default(0)
-  fixmeCount        Int      @default(0)
-  fileCount         Int      @default(0)
-  summary           String?
-  createdAt         DateTime @default(now())
+  id                  String   @id @default(uuid())
+  projectId           String
+  detectedStack       String   @default("[]")
+  detectedLanguages   String   @default("[]")
+  importantFiles      String   @default("[]")
+  todoCount           Int      @default(0)
+  fixmeCount          Int      @default(0)
+  fileCount           Int      @default(0)
+  summary             String?
+  importEdges         String?
+  architecturePattern String?
+  createdAt           DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

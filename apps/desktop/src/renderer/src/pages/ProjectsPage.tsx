@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { projectsApi, gitApi, scanApi, sessionsApi, healthApi, brainApi, importApi, settingsApi, Project, GitScanResult, ScanResult, WorkSession, ProjectHealth, ChatMessage, GitHubRepo, ImportResult } from '../services/api'
+
+const DependencyGraphModal = lazy(() => import('../components/DependencyGraph/DependencyGraphModal'))
 
 type GitState     = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: GitScanResult } | { status: 'error'; message: string }
 type ScanState    = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: ScanResult }    | { status: 'error'; message: string }
@@ -18,6 +20,7 @@ export default function ProjectsPage() {
   const [lastSessions, setLastSessions] = useState<Record<string, WorkSession>>({})
   const [healthScores, setHealthScores] = useState<Record<string, ProjectHealth>>({})
   const [brainProject, setBrainProject] = useState<Project | null>(null)
+  const [graphProject, setGraphProject] = useState<Project | null>(null)
   const [showGitHubImport, setShowGitHubImport] = useState(false)
   const [scanAllProgress, setScanAllProgress] = useState<{ done: number; total: number } | null>(null)
   const [sortBy, setSortBy] = useState<'lastOpened' | 'name' | 'lastSession'>('lastOpened')
@@ -252,6 +255,7 @@ export default function ProjectsPage() {
               onEndSession={(s) => handleEndSessionRequest(p, s)}
               onArchive={() => handleArchive(p.id)}
               onBrain={() => setBrainProject(p)}
+              onGraph={() => setGraphProject(p)}
             />
           ))}
         </div>
@@ -291,6 +295,15 @@ export default function ProjectsPage() {
           project={brainProject}
           onClose={() => setBrainProject(null)}
         />
+      )}
+
+      {graphProject && (
+        <Suspense fallback={null}>
+          <DependencyGraphModal
+            project={graphProject}
+            onClose={() => setGraphProject(null)}
+          />
+        </Suspense>
       )}
 
       {showGitHubImport && (
@@ -348,6 +361,7 @@ function ProjectCard({
   onEndSession,
   onArchive,
   onBrain,
+  onGraph,
 }: {
   project: Project
   gitState: GitState
@@ -361,6 +375,7 @@ function ProjectCard({
   onEndSession: (s: WorkSession) => void
   onArchive: () => void
   onBrain: () => void
+  onGraph: () => void
 }) {
   const lastOpened = project.lastOpenedAt
     ? new Date(project.lastOpenedAt).toLocaleDateString()
@@ -509,6 +524,7 @@ function ProjectCard({
           ) : <div />}
           <div className="project-actions">
             <button type="button" className="btn-icon btn-icon-brain" onClick={onBrain} title="Ask Project Brain">◈</button>
+            <button type="button" className="btn-icon btn-icon-graph" onClick={onGraph} title="Dependency graph">⬡</button>
             <button type="button" className="btn-icon btn-icon-git" onClick={onGitScan} disabled={gitState.status === 'scanning'} title="Scan Git">
               {gitState.status === 'scanning' ? '⟳' : '⎇'}
             </button>
