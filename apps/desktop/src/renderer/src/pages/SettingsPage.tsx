@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [openAiModel, setOpenAiModel] = useState('')
   const [claudeKey, setClaudeKey] = useState('')
   const [claudeModel, setClaudeModel] = useState('')
+  const [githubToken, setGithubToken] = useState('')
 
   useEffect(() => {
     settingsApi.get()
@@ -24,6 +25,7 @@ export default function SettingsPage() {
         setProvider(s.aiProvider)
         setOpenAiModel(s.openAiModel)
         setClaudeModel(s.claudeModel)
+        setGithubToken(s.githubToken)
       })
       .catch(() => setError('Could not load settings. Make sure npm run dev:api is running.'))
       .finally(() => setLoading(false))
@@ -41,10 +43,12 @@ export default function SettingsPage() {
         openAiModel: openAiModel || undefined,
         ...(claudeKey ? { claudeApiKey: claudeKey } : {}),
         claudeModel: claudeModel || undefined,
+        githubToken: githubToken,
       })
       setSettings(updated)
       setOpenAiKey('')
       setClaudeKey('')
+      setGithubToken(updated.githubToken)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (err) {
@@ -179,6 +183,28 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+
+        <div className="settings-section">
+          <h2 className="settings-section-title">GitHub Integration</h2>
+          <p className="settings-section-desc">
+            Required for importing private repositories. Generate at GitHub → Settings → Developer settings → Personal access tokens → Fine-grained → Contents: Read-only.
+          </p>
+          <div className="settings-fields">
+            <div className="form-field">
+              <label>
+                Personal Access Token{' '}
+                {settings?.githubToken && <span className="settings-key-status">● Token saved</span>}
+              </label>
+              <input
+                type="password"
+                value={githubToken}
+                onChange={(e) => setGithubToken(e.target.value)}
+                placeholder="github_pat_… or ghp_…"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="settings-footer">
           {saved && <span className="settings-saved">✓ Settings saved</span>}

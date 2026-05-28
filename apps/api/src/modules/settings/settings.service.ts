@@ -10,6 +10,7 @@ export interface AppSettings {
   openAiModel?: string
   claudeApiKey?: string
   claudeModel?: string
+  githubToken?: string
 }
 
 const DEFAULTS: AppSettings = { aiProvider: 'mock' }
@@ -38,5 +39,6 @@ export function getPublicSettings(s: AppSettings) {
     openAiModel: s.openAiModel ?? '',
     hasClaudeKey: Boolean(s.claudeApiKey),
     claudeModel: s.claudeModel ?? '',
+    githubToken: s.githubToken ?? '',
   }
 }

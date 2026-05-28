@@ -180,17 +180,17 @@ body {
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn-secondary {
-  background: var(--surface-2);
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
-.btn-secondary:hover { background: #283548; }
+.btn-secondary:hover { background: rgba(56, 189, 248, 0.1); }
 
 .btn-ghost {
   background: none;
@@ -1509,4 +1509,237 @@ body {
   color: var(--text-dim);
   padding: 16px 0 8px;
   border-top: 1px solid var(--border);
+}
+
+/* ── GitHub Import Modal ─────────────────── */
+.page-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.field-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.gh-select-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.gh-select-count {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.gh-select-count strong { color: var(--text); }
+
+.gh-repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 360px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.gh-repo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.gh-repo-item:hover { background: var(--surface-2); }
+
+.gh-repo-item input[type="checkbox"] {
+  flex-shrink: 0;
+  accent-color: var(--primary);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.gh-repo-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gh-repo-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gh-repo-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gh-repo-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.gh-repo-stars {
+  font-size: 0.72rem;
+  color: var(--warning);
+}
+
+/* Import progress + results */
+.gh-progress { text-align: center; padding: 24px 0; }
+
+.gh-progress-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.gh-progress-current {
+  font-size: 0.82rem;
+  color: var(--primary);
+  margin-bottom: 16px;
+  min-height: 1.4em;
+}
+
+.gh-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.gh-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.gh-result-success { background: rgba(34, 197, 94, 0.08); }
+.gh-result-skipped { background: rgba(107, 114, 128, 0.1); }
+.gh-result-error   { background: rgba(239, 68, 68, 0.08); }
+
+.gh-result-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.gh-result-success .gh-result-icon { color: var(--success); }
+.gh-result-skipped .gh-result-icon { color: var(--text-muted); }
+.gh-result-error   .gh-result-icon { color: var(--danger); }
+
+.gh-result-name {
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+.gh-result-msg {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Done summary */
+.gh-done-summary {
+  text-align: center;
+  padding: 20px 0 16px;
+}
+
+.gh-done-icon {
+  font-size: 2rem;
+  color: var(--success);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.gh-done-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.gh-done-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ── Sort select ─────────────────────────── */
+.sort-select {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.sort-select:hover,
+.sort-select:focus {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.sort-select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ── Search input ────────────────────────── */
+.search-input {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  width: 180px;
+  outline: none;
+  transition: border-color 0.15s, width 0.2s;
+}
+
+.search-input::placeholder { color: var(--text-muted); }
+
+.search-input:focus {
+  border-color: var(--primary);
+  width: 220px;
+}
+
+.search-input::-webkit-search-cancel-button {
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.gh-repo-private { font-size: 0.75rem; opacity: 0.7; }
+
+.badge-private {
+  font-size: 0.75rem;
+  opacity: 0.65;
+  flex-shrink: 0;
 }

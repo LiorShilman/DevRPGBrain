@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { projectsApi, gitApi, scanApi, sessionsApi, healthApi, brainApi, Project, GitScanResult, ScanResult, WorkSession, ProjectHealth, ChatMessage } from '../services/api'
+import { projectsApi, gitApi, scanApi, sessionsApi, healthApi, brainApi, importApi, settingsApi, Project, GitScanResult, ScanResult, WorkSession, ProjectHealth, ChatMessage, GitHubRepo, ImportResult } from '../services/api'
 
 type GitState     = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: GitScanResult } | { status: 'error'; message: string }
 type ScanState    = { status: 'idle' } | { status: 'scanning' } | { status: 'done'; data: ScanResult }    | { status: 'error'; message: string }
@@ -18,6 +18,9 @@ export default function ProjectsPage() {
   const [lastSessions, setLastSessions] = useState<Record<string, WorkSession>>({})
   const [healthScores, setHealthScores] = useState<Record<string, ProjectHealth>>({})
   const [brainProject, setBrainProject] = useState<Project | null>(null)
+  const [showGitHubImport, setShowGitHubImport] = useState(false)
+  const [sortBy, setSortBy] = useState<'lastOpened' | 'name' | 'lastSession'>('lastOpened')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     loadProjects()
@@ -120,18 +123,63 @@ export default function ProjectsPage() {
     setProjects((prev) => prev.filter((p) => p.id !== id))
   }
 
+  const q = searchQuery.toLowerCase().trim()
+  const filteredProjects = q
+    ? projects.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.description ?? '').toLowerCase().includes(q) ||
+          (p.primaryLanguage ?? '').toLowerCase().includes(q)
+      )
+    : projects
+
+  const sortedProjects = [...filteredProjects].sort((a, b) => {
+    if (sortBy === 'name') return a.name.localeCompare(b.name)
+    if (sortBy === 'lastSession') {
+      const aTime = lastSessions[a.id]?.endedAt ? new Date(lastSessions[a.id].endedAt!).getTime() : 0
+      const bTime = lastSessions[b.id]?.endedAt ? new Date(lastSessions[b.id].endedAt!).getTime() : 0
+      return bTime - aTime
+    }
+    // lastOpened (default)
+    const aT = a.lastOpenedAt ? new Date(a.lastOpenedAt).getTime() : 0
+    const bT = b.lastOpenedAt ? new Date(b.lastOpenedAt).getTime() : 0
+    return bT - aT
+  })
+
   return (
     <div className="page">
       <div className="page-header">
         <div>
           <h1 className="page-title">Projects</h1>
           <p className="page-subtitle">
-            {projects.length} active project{projects.length !== 1 ? 's' : ''}
+            {q ? `${sortedProjects.length} of ${projects.length}` : `${projects.length}`} project{projects.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
-          + Add Project
-        </button>
+        <div className="page-header-actions">
+          <input
+            className="search-input"
+            type="search"
+            placeholder="Search projects…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <select
+            className="sort-select"
+            title="Sort projects"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          >
+            <option value="lastOpened">Last opened</option>
+            <option value="name">Name A→Z</option>
+            <option value="lastSession">Last session</option>
+          </select>
+          <button type="button" className="btn-secondary" onClick={() => setShowGitHubImport(true)}>
+            ⬇ Import GitHub
+          </button>
+          <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+            + Add Project
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-banner">{error}</div>}
@@ -144,9 +192,17 @@ export default function ProjectsPage() {
           <p>No projects yet</p>
           <p className="empty-hint">Add a local project folder to get started</p>
         </div>
+      ) : sortedProjects.length === 0 && q ? (
+        <div className="empty-state">
+          <div className="empty-icon">⊘</div>
+          <p>No projects match "{searchQuery}"</p>
+          <button type="button" className="btn-ghost" onClick={() => setSearchQuery('')}>
+            Clear search
+          </button>
+        </div>
       ) : (
         <div className="project-grid">
-          {projects.map((p) => (
+          {sortedProjects.map((p) => (
             <ProjectCard
               key={p.id}
               project={p}
@@ -199,6 +255,16 @@ export default function ProjectsPage() {
         <ProjectBrainModal
           project={brainProject}
           onClose={() => setBrainProject(null)}
+        />
+      )}
+
+      {showGitHubImport && (
+        <GitHubImportModal
+          onClose={() => setShowGitHubImport(false)}
+          onImported={() => {
+            setShowGitHubImport(false)
+            loadProjects()
+          }}
         />
       )}
     </div>
@@ -282,6 +348,7 @@ function ProjectCard({
         <div>
           <div className="project-name-row">
             <h3 className="project-name">{project.name}</h3>
+            {project.isPrivate && <span className="badge-private" title="Private repository">🔒</span>}
             {health && <HealthBadge score={health.score} status={health.status} />}
           </div>
           {project.description && <p className="project-desc">{project.description}</p>}
@@ -681,6 +748,245 @@ function ProjectBrainModal({ project, onClose }: { project: Project; onClose: ()
             ↑
           </button>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function GitHubImportModal({
+  onClose,
+  onImported,
+}: {
+  onClose: () => void
+  onImported: () => void
+}) {
+  type Step = 'config' | 'select' | 'importing' | 'done'
+  const [step, setStep] = useState<Step>('config')
+  const [username, setUsername] = useState('LiorShilman')
+  const [token, setToken] = useState('')
+  const [baseDir, setBaseDir] = useState('E:\\AllMyProjects')
+
+  useEffect(() => {
+    settingsApi.get().then((s) => { if (s.githubToken) setToken(s.githubToken) }).catch(() => {})
+  }, [])
+  const [fetching, setFetching] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [repos, setRepos] = useState<GitHubRepo[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [results, setResults] = useState<ImportResult[]>([])
+  const [importingRepo, setImportingRepo] = useState<string | null>(null)
+
+  async function handleFetch(e: React.FormEvent) {
+    e.preventDefault()
+    setFetchError(null)
+    setFetching(true)
+    try {
+      const { repos: list } = await importApi.listRepos(username.trim(), token.trim() || undefined)
+      setRepos(list)
+      const allNames = new Set(list.map((r) => r.name))
+      setSelected(allNames)
+      setStep('select')
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Failed to fetch repos')
+    } finally {
+      setFetching(false)
+    }
+  }
+
+  function toggleRepo(name: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (selected.size === repos.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(repos.map((r) => r.name)))
+    }
+  }
+
+  async function handleImport() {
+    const toImport = repos.filter((r) => selected.has(r.name))
+    if (toImport.length === 0) return
+    setStep('importing')
+    const allResults: ImportResult[] = []
+
+    for (const repo of toImport) {
+      setImportingRepo(repo.name)
+      try {
+        const { results: r } = await importApi.cloneRepos([repo], baseDir, token.trim() || undefined)
+        allResults.push(...r)
+      } catch (err) {
+        allResults.push({
+          repo: repo.name,
+          status: 'error',
+          message: err instanceof Error ? err.message : 'Failed',
+        })
+      }
+    }
+
+    setResults(allResults)
+    setImportingRepo(null)
+    setStep('done')
+  }
+
+  const successCount = results.filter((r) => r.status === 'success').length
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal modal-lg">
+        <div className="modal-header">
+          <h2>Import from GitHub</h2>
+          <button type="button" className="btn-ghost" onClick={onClose}>✕</button>
+        </div>
+
+        {step === 'config' && (
+          <form onSubmit={handleFetch} className="modal-body">
+            {fetchError && <div className="error-banner">{fetchError}</div>}
+            <div className="form-field">
+              <label>GitHub Username</label>
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="e.g. LiorShilman"
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>
+                GitHub Token <span className="optional">(optional — required for private repos)</span>
+              </label>
+              <input
+                type="password"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="ghp_xxxxxxxxxxxx"
+                autoComplete="off"
+              />
+              <p className="field-hint">
+                Generate at GitHub → Settings → Developer settings → Personal access tokens → Fine-grained → repo scope
+              </p>
+            </div>
+            <div className="form-field">
+              <label>Clone to directory</label>
+              <input
+                value={baseDir}
+                onChange={(e) => setBaseDir(e.target.value)}
+                placeholder="e.g. E:\AllMyProjects"
+                required
+              />
+              <p className="field-hint">Each repo will be cloned as a sub-folder here</p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn-primary" disabled={fetching}>
+                {fetching ? 'Fetching…' : 'Fetch Repos →'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {step === 'select' && (
+          <div className="modal-body">
+            <div className="gh-select-header">
+              <span className="gh-select-count">
+                {repos.length} public repos from <strong>{username}</strong>
+              </span>
+              <button type="button" className="btn-ghost btn-sm" onClick={toggleAll}>
+                {selected.size === repos.length ? 'Deselect all' : 'Select all'}
+              </button>
+            </div>
+            <div className="gh-repo-list">
+              {repos.map((repo) => (
+                <label key={repo.name} className="gh-repo-item">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(repo.name)}
+                    onChange={() => toggleRepo(repo.name)}
+                  />
+                  <div className="gh-repo-info">
+                    <span className="gh-repo-name">{repo.name}</span>
+                    {repo.description && (
+                      <span className="gh-repo-desc">{repo.description}</span>
+                    )}
+                  </div>
+                  <div className="gh-repo-meta">
+                    {repo.isPrivate && <span className="gh-repo-private">🔒</span>}
+                    {repo.language && <span className="meta-badge">{repo.language}</span>}
+                    {repo.stargazersCount > 0 && (
+                      <span className="gh-repo-stars">★ {repo.stargazersCount}</span>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => setStep('config')}>← Back</button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleImport}
+                disabled={selected.size === 0}
+              >
+                Import {selected.size} repo{selected.size !== 1 ? 's' : ''} →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'importing' && (
+          <div className="modal-body gh-progress">
+            <p className="gh-progress-title">Cloning repositories…</p>
+            <p className="gh-progress-current">⟳ {importingRepo}</p>
+            <div className="gh-results-list">
+              {results.map((r) => (
+                <div key={r.repo} className={`gh-result gh-result-${r.status}`}>
+                  <span className="gh-result-icon">
+                    {r.status === 'success' ? '✓' : r.status === 'skipped' ? '○' : '✕'}
+                  </span>
+                  <span className="gh-result-name">{r.repo}</span>
+                  {r.message && <span className="gh-result-msg">{r.message}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 'done' && (
+          <div className="modal-body">
+            <div className="gh-done-summary">
+              <span className="gh-done-icon">✓</span>
+              <p className="gh-done-title">Import complete</p>
+              <p className="gh-done-sub">
+                {successCount} project{successCount !== 1 ? 's' : ''} added
+                {results.filter((r) => r.status === 'skipped').length > 0 &&
+                  ` · ${results.filter((r) => r.status === 'skipped').length} skipped`}
+                {results.filter((r) => r.status === 'error').length > 0 &&
+                  ` · ${results.filter((r) => r.status === 'error').length} failed`}
+              </p>
+            </div>
+            <div className="gh-results-list">
+              {results.map((r) => (
+                <div key={r.repo} className={`gh-result gh-result-${r.status}`}>
+                  <span className="gh-result-icon">
+                    {r.status === 'success' ? '✓' : r.status === 'skipped' ? '○' : '✕'}
+                  </span>
+                  <span className="gh-result-name">{r.repo}</span>
+                  {r.message && <span className="gh-result-msg">{r.message}</span>}
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-primary" onClick={onImported}>
+                Done
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

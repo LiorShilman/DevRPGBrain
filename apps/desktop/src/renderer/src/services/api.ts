@@ -21,6 +21,7 @@ export interface Project {
   primaryLanguage: string | null
   framework: string | null
   isGitRepo: boolean
+  isPrivate: boolean
   createdAt: string
   updatedAt: string
   lastOpenedAt: string | null
@@ -186,6 +187,7 @@ export interface AppSettings {
   openAiModel: string
   hasClaudeKey: boolean
   claudeModel: string
+  githubToken: string
 }
 
 export const settingsApi = {
@@ -196,6 +198,7 @@ export const settingsApi = {
     openAiModel?: string
     claudeApiKey?: string
     claudeModel?: string
+    githubToken?: string
   }) => request<AppSettings>('/api/settings', { method: 'PUT', body: JSON.stringify(data) }),
 }
 
@@ -209,6 +212,39 @@ export const brainApi = {
     request<{ reply: string }>(`/api/projects/${projectId}/brain/chat`, {
       method: 'POST',
       body: JSON.stringify({ question, history }),
+    }),
+}
+
+export interface GitHubRepo {
+  name: string
+  fullName: string
+  description: string | null
+  language: string | null
+  isPrivate: boolean
+  defaultBranch: string
+  updatedAt: string
+  cloneUrl: string
+  stargazersCount: number
+  forksCount: number
+}
+
+export interface ImportResult {
+  repo: string
+  status: 'success' | 'skipped' | 'error'
+  message?: string
+  projectId?: string
+}
+
+export const importApi = {
+  listRepos: (username: string, token?: string) => {
+    const params = new URLSearchParams({ username })
+    if (token) params.set('token', token)
+    return request<{ repos: GitHubRepo[] }>(`/api/import/github/repos?${params}`)
+  },
+  cloneRepos: (repos: GitHubRepo[], baseDir: string, token?: string) =>
+    request<{ results: ImportResult[] }>('/api/import/github/clone', {
+      method: 'POST',
+      body: JSON.stringify({ repos, baseDir, token: token || undefined }),
     }),
 }
 
