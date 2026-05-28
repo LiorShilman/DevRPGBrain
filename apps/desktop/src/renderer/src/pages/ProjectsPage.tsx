@@ -179,43 +179,41 @@ export default function ProjectsPage() {
             />
           </div>
 
-          <div className="filter-group">
-            <select
-              className="sort-select"
-              title="Sort projects"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          <select
+            className="sort-select"
+            title="Sort projects"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          >
+            <option value="lastOpened">Last opened</option>
+            <option value="name">Name A→Z</option>
+            <option value="lastSession">Last session</option>
+          </select>
+
+          {scanAllProgress ? (
+            <span className="scan-all-progress">
+              ⟳ {scanAllProgress.done}/{scanAllProgress.total}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="btn-toolbar"
+              onClick={handleScanAll}
+              disabled={projects.length === 0}
+              title="Scan all projects"
             >
-              <option value="lastOpened">Last opened</option>
-              <option value="name">Name A→Z</option>
-              <option value="lastSession">Last session</option>
-            </select>
-
-            {scanAllProgress ? (
-              <span className="scan-all-progress">
-                ⟳ {scanAllProgress.done}/{scanAllProgress.total}
-              </span>
-            ) : (
-              <button
-                type="button"
-                className="btn-icon btn-icon-scan"
-                onClick={handleScanAll}
-                disabled={projects.length === 0}
-                title="Scan all projects to detect language, framework, and TODO counts"
-              >
-                ⊞
-              </button>
-            )}
-          </div>
-
-          <div className="action-group">
-            <button type="button" className="btn-secondary" onClick={() => setShowGitHubImport(true)}>
-              ⬇ GitHub
+              ⊞ Scan All
             </button>
-            <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
-              + Add Project
-            </button>
-          </div>
+          )}
+
+          <div className="toolbar-divider" />
+
+          <button type="button" className="btn-toolbar" onClick={() => setShowGitHubImport(true)}>
+            ⬇ GitHub
+          </button>
+          <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+            + Add Project
+          </button>
         </div>
       </div>
 
