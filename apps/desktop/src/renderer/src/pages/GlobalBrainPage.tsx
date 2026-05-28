@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, ReactNode } from 'react'
 import { brainApi, ChatMessage } from '../services/api'
+import { useGlobalBrain } from '../context/GlobalBrainContext'
 
 const SUGGESTIONS = [
   'On which project should I focus today?',
@@ -7,11 +8,89 @@ const SUGGESTIONS = [
   'What are my open blockers across all projects?',
   'Give me a summary of where I stand across all projects.',
   'Which project has the most pending next steps?',
-  'Compare the health of all my projects.',
+  'Which projects use Angular or React?',
 ]
 
+function renderMarkdown(text: string) {
+  const lines = text.split('\n')
+  const elements: ReactNode[] = []
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    // ### heading
+    if (/^#{1,3}\s/.test(line)) {
+      elements.push(<p key={i} className="md-heading">{inlineFormat(line.replace(/^#{1,3}\s/, ''))}</p>)
+      i++
+      continue
+    }
+
+    // Numbered list block
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s/, ''))
+        i++
+      }
+      elements.push(
+        <ol key={i} className="md-list md-ol">
+          {items.map((item, j) => <li key={j}>{inlineFormat(item)}</li>)}
+        </ol>
+      )
+      continue
+    }
+
+    // Bullet list block
+    if (/^[-•*]\s/.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^[-•*]\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-•*]\s/, ''))
+        i++
+      }
+      elements.push(
+        <ul key={i} className="md-list md-ul">
+          {items.map((item, j) => <li key={j}>{inlineFormat(item)}</li>)}
+        </ul>
+      )
+      continue
+    }
+
+    // Section header (ends with : and short)
+    if (line.endsWith(':') && line.length < 60 && !line.startsWith(' ')) {
+      elements.push(<p key={i} className="md-section-header">{inlineFormat(line)}</p>)
+      i++
+      continue
+    }
+
+    // Empty line → spacer
+    if (line.trim() === '') {
+      elements.push(<div key={i} className="md-spacer" />)
+      i++
+      continue
+    }
+
+    // Regular paragraph line
+    elements.push(<p key={i} className="md-para">{inlineFormat(line)}</p>)
+    i++
+  }
+
+  return elements
+}
+
+function inlineFormat(text: string): ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**'))
+      return <strong key={i}>{part.slice(2, -2)}</strong>
+    if (part.startsWith('`') && part.endsWith('`'))
+      return <code key={i} className="md-code">{part.slice(1, -1)}</code>
+    return part
+  })
+}
+
 export default function GlobalBrainPage() {
-  const [history, setHistory] = useState<ChatMessage[]>([])
+  const { history, setHistory } = useGlobalBrain()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,15 +166,24 @@ export default function GlobalBrainPage() {
 
           {history.map((msg, i) => (
             <div key={i} className={`brain-msg brain-msg-${msg.role}`}>
-              <span className="brain-msg-label">{msg.role === 'user' ? 'You' : '◈ Global Brain'}</span>
-              <p className="brain-msg-text">{msg.content}</p>
+              <span className="brain-msg-label">
+                {msg.role === 'user' ? 'You' : 'Global Brain'}
+              </span>
+              <div className="brain-msg-body" dir="auto">
+                {msg.role === 'assistant'
+                  ? renderMarkdown(msg.content)
+                  : <p className="md-para">{msg.content}</p>
+                }
+              </div>
             </div>
           ))}
 
           {loading && (
             <div className="brain-msg brain-msg-assistant brain-thinking">
               <span className="brain-msg-label">◈ Global Brain</span>
-              <p className="brain-msg-text">Analyzing all projects…</p>
+              <div className="brain-msg-body brain-thinking-dots">
+                <span /><span /><span />
+              </div>
             </div>
           )}
 
@@ -107,6 +195,7 @@ export default function GlobalBrainPage() {
           <textarea
             ref={inputRef}
             className="brain-input"
+            dir="auto"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

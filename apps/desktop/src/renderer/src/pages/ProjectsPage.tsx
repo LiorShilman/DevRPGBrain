@@ -492,21 +492,22 @@ function ProjectCard({
       )}
 
       <div className="project-footer">
-        <p className="project-path" title={project.path}>{project.path}</p>
+        <p className="project-opened" title={project.path}>
+          {lastOpened === 'Never' ? 'Never opened' : `Last opened: ${lastOpened}`}
+        </p>
         <div className="project-footer-bottom">
-          <p className="project-opened">Last opened: {lastOpened}</p>
+          {!activeSession ? (
+            <button
+              type="button"
+              className="btn-success"
+              onClick={onStartSession}
+              disabled={sessionState.status === 'starting'}
+              title="Start a work session"
+            >
+              {sessionState.status === 'starting' ? '…' : '▶ Session'}
+            </button>
+          ) : <div />}
           <div className="project-actions">
-            {!activeSession && (
-              <button
-                type="button"
-                className="btn-success"
-                onClick={onStartSession}
-                disabled={sessionState.status === 'starting'}
-                title="Start a work session"
-              >
-                {sessionState.status === 'starting' ? '…' : '▶ Session'}
-              </button>
-            )}
             <button type="button" className="btn-icon btn-icon-brain" onClick={onBrain} title="Ask Project Brain">◈</button>
             <button type="button" className="btn-icon btn-icon-git" onClick={onGitScan} disabled={gitState.status === 'scanning'} title="Scan Git">
               {gitState.status === 'scanning' ? '⟳' : '⎇'}

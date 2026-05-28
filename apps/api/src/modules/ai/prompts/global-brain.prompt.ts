@@ -13,8 +13,12 @@ export function buildGlobalBrainSystemPrompt(input: GlobalChatInput): string {
     lines.push('')
     const privacy = p.isPrivate ? ' [private]' : ''
     const health = p.healthStatus ? ` | Health: ${p.healthStatus} ${p.healthScore}/100` : ''
-    const lang = [p.language, p.framework].filter(Boolean).join(' / ')
-    lines.push(`### ${p.name}${privacy}${lang ? ` (${lang})` : ''}${health}`)
+    const stackParts = [
+      ...(p.detectedLanguages.length > 0 ? p.detectedLanguages.slice(0, 3) : p.language ? [p.language] : []),
+      ...(p.detectedStack.length > 0 ? p.detectedStack.slice(0, 4) : p.framework ? [p.framework] : []),
+    ]
+    const lang = [...new Set(stackParts)].join(', ')
+    lines.push(`### ${p.name}${privacy}${lang ? ` [${lang}]` : ''}${health}`)
     if (p.description) lines.push(`Description: ${p.description}`)
     lines.push(`Sessions recorded: ${p.sessionCount}`)
     if (p.lastSessionDate) {

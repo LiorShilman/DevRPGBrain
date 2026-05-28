@@ -74,6 +74,8 @@ export interface GlobalChatProjectSummary {
   description: string | null
   language: string | null
   framework: string | null
+  detectedStack: string[]
+  detectedLanguages: string[]
   isGitRepo: boolean
   isPrivate: boolean
   healthScore: number | null
