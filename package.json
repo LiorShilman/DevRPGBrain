@@ -16,8 +16,7 @@
     "prisma:migrate": "npm run prisma:migrate --workspace=apps/api",
     "prisma:studio": "npm run prisma:studio --workspace=apps/api",
     "kill:api": "npx kill-port 3001",
-    "dist": "turbo run build && npm run dist --workspace=apps/desktop",
-    "test": "turbo run test"
+    "dist": "turbo run build && npm run dist --workspace=apps/desktop"
   },
   "engines": {
     "node": ">=20.0.0",

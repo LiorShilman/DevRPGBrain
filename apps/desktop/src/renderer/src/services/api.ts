@@ -342,6 +342,73 @@ export const filesApi = {
   },
 }
 
+export interface BossFight {
+  id: string
+  projectId: string
+  projectName?: string
+  name: string
+  description: string
+  xpReward: number
+  status: string
+  createdAt: string
+  defeatedAt: string | null
+}
+
+export const bossFightApi = {
+  listActive: () => request<BossFight[]>('/api/boss-fights'),
+  getActive: (projectId: string) => request<BossFight | null>(`/api/projects/${projectId}/boss-fight`),
+}
+
+export interface KnowledgeNode {
+  id: string
+  type: 'session' | 'decision' | 'blocker' | 'nextStep' | 'memory'
+  label: string
+  detail: string
+  date: string
+}
+
+export interface KnowledgeEdge {
+  id: string
+  source: string
+  target: string
+  label: string
+}
+
+export const knowledgeApi = {
+  get: (projectId: string) => request<{ nodes: KnowledgeNode[]; edges: KnowledgeEdge[] }>(`/api/projects/${projectId}/knowledge`),
+}
+
+export const contextApi = {
+  async restoreStream(projectId: string, onChunk: (text: string) => void): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}/context/restore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const reader = res.body?.getReader()
+    if (!reader) throw new Error('No response body')
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6)
+        if (data === '[DONE]') return
+        try {
+          const parsed = JSON.parse(data) as { text?: string; error?: string }
+          if (parsed.error) throw new Error(parsed.error)
+          if (parsed.text) onChunk(parsed.text)
+        } catch (e) { if (e instanceof Error) throw e }
+      }
+    }
+  },
+}
+
 export const projectsApi = {
   list: () => request<Project[]>('/api/projects'),
   get: (id: string) => request<Project>(`/api/projects/${id}`),

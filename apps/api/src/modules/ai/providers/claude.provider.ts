@@ -1,4 +1,4 @@
-import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput, ChatMessage, CodeAnalysisInput, CodeAnalysisOutput } from '../ai-provider.interface'
+import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput, ChatMessage, CodeAnalysisInput, CodeAnalysisOutput, ContextRestoreInput } from '../ai-provider.interface'
 import { buildGlobalBrainSystemPrompt } from '../prompts/global-brain.prompt'
 
 const CODE_ANALYSIS_PROMPT = `You are a senior software engineer performing a code review. Analyze the provided file and respond with a JSON object only — no markdown, no explanation.
@@ -12,6 +12,15 @@ Structure:
 3. **Key concepts** — Important patterns, techniques, or APIs used
 4. **Dependencies** — What this code depends on
 5. **Potential issues** — Edge cases, performance concerns, or improvements`
+
+const CONTEXT_RESTORE_PROMPT = `You are a developer's AI second brain. Your job is to reconstruct the developer's mental context so they can resume work immediately after a break. Use markdown with bold headers (**Header**) and bullet points.
+
+Structure your response as:
+1. **Where You Left Off** — 2-3 sentence recap of the last session and what was in progress
+2. **Open Threads** — Unresolved decisions, blockers, and questions that need attention
+3. **Next Actions** — The 3 most important concrete things to do right now, ranked by priority
+4. **Cognitive Snapshot** — Key context to hold in mind: relevant architecture decisions, gotchas, current git state
+5. **Energy Check** — One motivational sentence connecting this work to the bigger picture`
 
 const FILE_STREAM_PROMPT = `You are a senior code analysis expert. Analyze this complete file. Use markdown with bold headers (**Header**).
 
@@ -121,6 +130,55 @@ export class ClaudeProvider implements AIProvider {
     const userContent = `Project: ${input.projectName}\nFile: ${input.filePath}\nLanguage: ${input.language}\n\n${input.content.slice(0, 8000)}`
     const text = await this.message(CODE_ANALYSIS_PROMPT, userContent, 1500)
     return JSON.parse(text) as CodeAnalysisOutput
+  }
+
+  async restoreContext(input: ContextRestoreInput, onChunk: (text: string) => void): Promise<void> {
+    const lines: string[] = [`Project: ${input.projectName}`]
+    if (input.description) lines.push(`Description: ${input.description}`)
+    if (input.gitBranch) lines.push(`Git branch: ${input.gitBranch}`)
+    if (input.lastCommitMessage) lines.push(`Last commit: ${input.lastCommitMessage}`)
+    if (input.lastSession) {
+      const s = input.lastSession
+      const when = s.endedAt ? new Date(s.endedAt).toLocaleDateString() : 'in progress'
+      lines.push(`\nLast session (${when}, ${s.durationMinutes ?? '?'}m):`)
+      if (s.aiSummary) lines.push(`  Summary: ${s.aiSummary}`)
+      if (s.decisions.length > 0) lines.push(`  Decisions: ${s.decisions.join('; ')}`)
+      if (s.blockers.length > 0) lines.push(`  Blockers: ${s.blockers.join('; ')}`)
+      if (s.nextSteps.length > 0) lines.push(`  Next steps: ${s.nextSteps.join('; ')}`)
+    }
+    if (input.openBlockers.length > 0) lines.push(`\nOpen blockers: ${input.openBlockers.join('; ')}`)
+    if (input.recentMemories.length > 0) {
+      lines.push('\nRecent memories:')
+      input.recentMemories.slice(0, 5).forEach((m) => lines.push(`  [${m.type}] ${m.title}: ${m.content.slice(0, 200)}`))
+    }
+    const userContent = lines.join('\n')
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': this.apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: this.model, max_tokens: 1500, stream: true, system: CONTEXT_RESTORE_PROMPT, messages: [{ role: 'user', content: userContent }] }),
+    })
+    if (!res.ok) throw new Error(`Claude error: ${res.status} ${res.statusText}`)
+    const reader = res.body?.getReader()
+    if (!reader) throw new Error('No response body')
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines2 = buffer.split('\n')
+      buffer = lines2.pop() ?? ''
+      for (const line of lines2) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6)
+        if (data === '[DONE]') return
+        try {
+          const parsed = JSON.parse(data) as { type?: string; delta?: { text?: string } }
+          if (parsed.type === 'content_block_delta' && parsed.delta?.text) onChunk(parsed.delta.text)
+        } catch { /* skip */ }
+      }
+    }
   }
 
   async analyzeCodeStream(input: CodeAnalysisInput, onChunk: (text: string) => void): Promise<void> {

@@ -1,4 +1,4 @@
-import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput, CodeAnalysisInput, CodeAnalysisOutput } from '../ai-provider.interface'
+import type { AIProvider, SessionSummaryInput, SessionSummaryOutput, DailyBriefingInput, DailyBriefingOutput, ProjectChatInput, ProjectChatOutput, GlobalChatInput, CodeAnalysisInput, CodeAnalysisOutput, ContextRestoreInput } from '../ai-provider.interface'
 
 function sleep(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)) }
 
@@ -53,6 +53,26 @@ export class MockAIProvider implements AIProvider {
       keyDecisions: ['Mock mode — no real analysis available'],
       dependencies: [],
       suggestions: ['Add an API key in Settings to unlock real AI code analysis'],
+    }
+  }
+
+  async restoreContext(input: ContextRestoreInput, onChunk: (text: string) => void): Promise<void> {
+    const lastNext = input.lastSession?.nextSteps[0]
+    const lastBlocker = input.lastSession?.blockers[0] ?? input.openBlockers[0]
+    const chunks = [
+      `**Where You Left Off**\nMock context restore for **${input.projectName}**.`,
+      input.lastSession ? ` Last session ended ${input.lastSession.endedAt ? new Date(input.lastSession.endedAt).toLocaleDateString() : 'recently'}.` : ' No previous sessions recorded.',
+      '\n\n**Open Threads**\n',
+      lastBlocker ? `- Blocker: ${lastBlocker}\n` : '- No open blockers recorded.\n',
+      '\n**Next Actions**\n',
+      lastNext ? `- ${lastNext}\n` : '- Start a new work session.\n',
+      '- Run a project scan to update health metrics.\n',
+      '\n**Cognitive Snapshot**\nMock mode is active — configure an AI provider in Settings to get real context restoration.\n',
+      '\n**Energy Check**\nEvery session builds momentum. ◈',
+    ]
+    for (const chunk of chunks) {
+      onChunk(chunk)
+      await sleep(80)
     }
   }
 

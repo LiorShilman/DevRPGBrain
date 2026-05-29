@@ -3,6 +3,7 @@ import { getAIProvider } from '../ai/ai-provider.factory'
 import { awardXp, calcSessionXp } from '../rpg/rpg.service'
 import { checkSessionAchievements } from '../rpg/achievement.service'
 import { calculateHealth } from '../health/health.service'
+import { checkAndSpawnBossFight, defeatBossFight } from '../boss-fight/boss-fight.service'
 import type { StartSessionInput, EndSessionInput } from './session.types'
 
 type RawSession = Awaited<ReturnType<typeof prisma.workSession.findFirst>>
@@ -102,13 +103,27 @@ export async function endSession(sessionId: string, input: EndSessionInput) {
     currentLevel: newLevel,
   })
 
-  // Auto-recalculate health (non-blocking)
-  calculateHealth(session.projectId).catch((err) =>
-    console.warn('[Health] calculateHealth failed:', err instanceof Error ? err.message : err)
-  )
+  // Defeat active boss fight (non-blocking)
+  let bossResult: { bossName: string; xpReward: number; leveledUp: boolean; newLevel: number } | null = null
+  try {
+    bossResult = await defeatBossFight(session.projectId, sessionId)
+    if (bossResult) {
+      leveledUp = leveledUp || bossResult.leveledUp
+      newLevel = Math.max(newLevel, bossResult.newLevel)
+    }
+  } catch (err) {
+    console.warn('[BossFight] defeatBossFight failed:', err instanceof Error ? err.message : err)
+  }
+
+  // Auto-recalculate health and spawn new boss if warranted (non-blocking)
+  calculateHealth(session.projectId)
+    .then((health) => checkAndSpawnBossFight(session.projectId, health.status))
+    .catch((err) =>
+      console.warn('[Health] calculateHealth failed:', err instanceof Error ? err.message : err)
+    )
 
   const parsed = parseSession(updated)
-  return { ...parsed, leveledUp, newLevel, newAchievements }
+  return { ...parsed, leveledUp, newLevel, newAchievements, bossDefeated: bossResult ? { name: bossResult.bossName, xpReward: bossResult.xpReward } : null }
 }
 
 export async function getActiveSession(projectId: string) {

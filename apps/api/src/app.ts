@@ -12,6 +12,9 @@ import { globalBrainRouter } from './modules/brain/global-brain.controller'
 import { settingsRouter } from './modules/settings/settings.controller'
 import { importRouter } from './modules/import/import.controller'
 import { filesRouter } from './modules/files/files.controller'
+import { bossFightRouter, projectBossFightRouter } from './modules/boss-fight/boss-fight.controller'
+import { contextRouter } from './modules/context/context.controller'
+import { knowledgeRouter } from './modules/knowledge/knowledge.controller'
 
 const app = express()
 
@@ -34,6 +37,10 @@ app.use('/api/settings', settingsRouter)
 app.use('/api/import', importRouter)
 app.use('/api/brain', globalBrainRouter)
 app.use('/api/projects/:id', filesRouter)
+app.use('/api/boss-fights', bossFightRouter)
+app.use('/api/projects/:id', projectBossFightRouter)
+app.use('/api/projects/:id', contextRouter)
+app.use('/api/projects/:id', knowledgeRouter)
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

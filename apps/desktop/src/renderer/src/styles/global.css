@@ -143,7 +143,7 @@ body {
 }
 
 /* ── Pages ──────────────────────────────── */
-.page { max-width: 1400px; }
+.page { }
 
 .page-header {
   display: flex;
@@ -1517,7 +1517,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-width: 600px;
 }
 
 .settings-section {
@@ -1895,7 +1894,7 @@ body {
 
 /* ── Help Page ───────────────────────────── */
 .help-page {
-  max-width: 960px;
+  max-width: none;
 }
 
 .help-intro {
@@ -1915,15 +1914,20 @@ body {
 }
 
 .help-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row-reverse;
   gap: 16px;
   margin-bottom: 32px;
 }
 
 .help-card {
   display: flex;
+  flex-direction: row-reverse;
   gap: 16px;
+  flex: 1 1 calc(50% - 8px);
+  max-width: calc(50% - 8px);
+  direction: rtl;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -2334,7 +2338,7 @@ body {
 }
 
 /* ── Global Brain Page ───────────────────── */
-.global-brain-page { max-width: 800px; display: flex; flex-direction: column; height: calc(100vh - 64px); }
+.global-brain-page { display: flex; flex-direction: column; height: calc(100vh - 64px); }
 
 .global-brain-icon { color: var(--accent); }
 
@@ -2976,3 +2980,355 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── Stat Radar (RPG page) ────────────────────────────────────────────── */
+.stat-radar-wrap {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.stat-radar-svg { width: 240px; height: 240px; flex-shrink: 0; }
+.stat-axis-label { fill: var(--ax-col, var(--primary)); }
+.stat-axis-val   { fill: var(--text-muted); }
+.stat-radar-dot  { fill: var(--dot-col, var(--primary)); stroke: #0f172a; }
+.stat-radar-dot-0 { fill: #38bdf8; }
+.stat-radar-dot-1 { fill: #a78bfa; }
+.stat-radar-dot-2 { fill: #22c55e; }
+.stat-radar-dot-3 { fill: #f59e0b; }
+.stat-radar-dot-4 { fill: #ec4899; }
+.stat-radar-dot-5 { fill: #06b6d4; }
+
+.stat-radar-legend { flex: 1; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.stat-row { display: flex; align-items: center; gap: 8px; }
+.stat-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--dot-col, var(--primary)); }
+.stat-label { font-size: 0.82rem; color: var(--text-muted); width: 120px; flex-shrink: 0; }
+.stat-bar-wrap { flex: 1; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+.stat-bar {
+  height: 100%;
+  width: var(--stat-w, 10%);
+  background: var(--stat-col, var(--primary));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.stat-val { font-size: 0.78rem; color: var(--text); font-weight: 600; width: 16px; text-align: right; }
+
+/* ── Boss Fight cards (Dashboard) ───────────────────────────────────────── */
+.boss-section { margin-top: 24px; }
+.boss-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ef4444;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.boss-section-title::before { content: '⚔'; font-size: 0.9rem; }
+
+.boss-card {
+  background: linear-gradient(135deg, #1a0a0a 0%, #1e0f0f 100%);
+  border: 1px solid #7f1d1d;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  animation: bossAppear 0.4s ease;
+}
+@keyframes bossAppear {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.boss-icon {
+  font-size: 1.8rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(239,68,68,0.5));
+}
+.boss-body { flex: 1; }
+.boss-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fca5a5;
+  margin-bottom: 4px;
+}
+.boss-project { font-size: 0.75rem; color: #6b7280; margin-bottom: 4px; }
+.boss-desc { font-size: 0.78rem; color: #9ca3af; line-height: 1.4; margin-bottom: 8px; }
+.boss-footer { display: flex; align-items: center; justify-content: space-between; }
+.boss-xp { font-size: 0.78rem; color: #f59e0b; font-weight: 600; }
+.boss-action {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #7f1d1d;
+  background: #450a0a;
+  color: #fca5a5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.boss-action:hover { background: #7f1d1d; color: #fff; }
+
+/* ── Context Restoration card ───────────────────────────────────────────── */
+.context-card {
+  background: linear-gradient(135deg, #0c1a2e 0%, #0f1f37 100%);
+  border: 1px solid #1e3a5f;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.context-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.context-card-icon { font-size: 1.1rem; color: var(--primary); }
+.context-card-title { font-size: 0.9rem; font-weight: 700; color: var(--text); flex: 1; }
+.context-card-subtitle { font-size: 0.74rem; color: var(--text-dim); }
+.context-restore-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid #1e3a5f;
+  background: var(--primary);
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.context-restore-btn:hover { background: var(--primary-hover); }
+.context-restore-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.context-content {
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.65;
+  border-top: 1px solid #1e293b;
+  padding-top: 12px;
+}
+.context-content strong { color: var(--primary); display: block; margin-top: 10px; margin-bottom: 4px; }
+.context-content code { background: #1e293b; padding: 1px 5px; border-radius: 3px; font-family: monospace; }
+.context-error { font-size: 0.8rem; color: var(--danger); padding-top: 8px; border-top: 1px solid #1e293b; }
+
+/* ── Knowledge Graph tab ─────────────────────────────────────────────────── */
+.knowledge-node {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 0.76rem;
+  font-weight: 600;
+  max-width: 180px;
+  text-align: center;
+  line-height: 1.3;
+  cursor: default;
+}
+.knowledge-node-session   { background: #0c1a2e; border-color: #38bdf8; color: #38bdf8; }
+.knowledge-node-decision  { background: #14092e; border-color: #a78bfa; color: #a78bfa; }
+.knowledge-node-blocker   { background: #1a0a0a; border-color: #ef4444; color: #ef4444; }
+.knowledge-node-nextStep  { background: #071a0e; border-color: #22c55e; color: #22c55e; }
+.knowledge-node-memory    { background: #1a1200; border-color: #f59e0b; color: #f59e0b; }
+
+.knowledge-node-detail {
+  font-size: 0.68rem;
+  font-weight: 400;
+  opacity: 0.75;
+  margin-top: 3px;
+  white-space: normal;
+  text-align: left;
+}
+.knowledge-legend {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(15,23,42,0.9);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+  pointer-events: none;
+}
+.knowledge-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.74rem;
+}
+.knowledge-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Knowledge graph node type colors (used in Help page + legend) */
+.help-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 6px; vertical-align: middle; flex-shrink: 0; }
+.help-dot.kg-session  { background: #38bdf8; }
+.help-dot.kg-decision { background: #a78bfa; }
+.help-dot.kg-blocker  { background: #ef4444; }
+.help-dot.kg-next     { background: #22c55e; }
+.help-dot.kg-memory   { background: #f59e0b; }
+
+/* Radar / blip CSS classes for the 4 quadrants */
+.blip { cursor: pointer; }
+.blip-q0 { --blip-col: #8B5CF6; }
+.blip-q1 { --blip-col: #EC4899; }
+.blip-q2 { --blip-col: #06B6D4; }
+.blip-q3 { --blip-col: #F59E0B; }
+.blip-halo   { fill: var(--blip-col); opacity: 0.2; }
+.blip-circle { fill: var(--blip-col); opacity: 0.75; }
+.blip-circle-hov { opacity: 1; stroke: #fff; stroke-width: 1.5; }
+.blip-label  { fill: var(--blip-col); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8)); }
+
+/* Radar legend per-quadrant colors */
+.radar-q0 .radar-legend-label, .radar-q0 .radar-blip-tag { color: #8B5CF6; }
+.radar-q1 .radar-legend-label, .radar-q1 .radar-blip-tag { color: #EC4899; }
+.radar-q2 .radar-legend-label, .radar-q2 .radar-blip-tag { color: #06B6D4; }
+.radar-q3 .radar-legend-label, .radar-q3 .radar-blip-tag { color: #F59E0B; }
+.radar-q0 .radar-blip-tag { border-color: #8B5CF640; }
+.radar-q1 .radar-blip-tag { border-color: #EC489940; }
+.radar-q2 .radar-blip-tag { border-color: #06B6D440; }
+.radar-q3 .radar-blip-tag { border-color: #F59E0B40; }
+
+/* Arch node CSS variables (set via useRef.setProperty) */
+.arch-node {
+  border-color: var(--arch-border, #33415580);
+  box-shadow: 0 0 20px var(--arch-glow, transparent), 0 4px 16px rgba(0,0,0,0.2);
+}
+.arch-node-pulse { border-color: var(--arch-pulse, transparent); }
+.arch-node-icon  { background: var(--arch-bg, transparent); border-color: var(--arch-mid, transparent); color: var(--arch-col, #64748b); }
+.arch-node-tech  { background: var(--arch-bg, transparent); border-color: var(--arch-low, transparent); color: var(--arch-col, #64748b); }
+.arch-handle     { opacity: 0; }
+
+/* File tree depth padding (set via useRef.setProperty) */
+.file-tree-dir, .file-tree-file { padding-left: var(--tree-pad, 8px); }
+
+/* TabCenter error state */
+.tab-center-error { color: var(--danger); }
+
+/* CodeMap section type colors (CSS classes replacing --cm-color inline style) */
+.cm-type-import   { --cm-color: #8B5CF6; }
+.cm-type-type     { --cm-color: #06B6D4; }
+.cm-type-function { --cm-color: #22C55E; }
+.cm-type-class    { --cm-color: #F59E0B; }
+.cm-type-variable { --cm-color: #EC4899; }
+.cm-type-export   { --cm-color: #3B82F6; }
+.cm-type-other    { --cm-color: #6B7280; }
+
+/* Minimap block width (--w set via useRef.setProperty) */
+.cm-minimap-block { width: var(--w, 2%); background: var(--cm-color, #6B7280); }
+/* Legend dot per type */
+.cm-legend-dot { background: var(--cm-color, #6B7280); }
+
+/* ── Commit timeline — animation delay via CSS variable ─────────────────── */
+.commit-item { animation-delay: var(--delay, 0s); }
+.commit-dot-head {
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf825;
+}
+
+/* ── Overview tab wrapper ───────────────────────────────────────────────── */
+.overview-wrap { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Knowledge Graph node (ReactFlow custom node) ───────────────────────── */
+.kg-node {
+  background: var(--kg-bg, #111827);
+  border: 1px solid var(--kg-border, #334155);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-width: 160px;
+  max-width: 220px;
+  font-size: 0.74rem;
+  cursor: default;
+  text-align: center;
+}
+.kg-node-type {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--kg-col, #64748b);
+  margin-bottom: 4px;
+}
+.kg-node-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  word-break: break-word;
+}
+.kg-node-date { font-size: 0.65rem; color: var(--text-dim); margin-top: 3px; }
+
+/* ── Knowledge Graph legend ─────────────────────────────────────────────── */
+.kg-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(15,23,42,0.85);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  pointer-events: none;
+  z-index: 10;
+}
+.kg-legend-item {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+.kg-legend-session  { color: #38bdf8; border-color: #38bdf840; background: #38bdf810; }
+.kg-legend-decision { color: #a78bfa; border-color: #a78bfa40; background: #a78bfa10; }
+.kg-legend-blocker  { color: #ef4444; border-color: #ef444440; background: #ef444410; }
+.kg-legend-nextStep { color: #22c55e; border-color: #22c55e40; background: #22c55e10; }
+.kg-legend-memory   { color: #f59e0b; border-color: #f59e0b40; background: #f59e0b10; }
+
+/* ── Context Restoration Card (new button/body/hint variants) ───────────── */
+.context-card-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.context-card-btn:hover { background: var(--primary); color: #0f172a; }
+.context-card-body {
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.65;
+  border-top: 1px solid #1e293b;
+  padding-top: 12px;
+}
+.context-card-body strong { color: var(--primary); display: block; margin-top: 10px; margin-bottom: 4px; }
+.context-card-body code { background: #1e293b; padding: 1px 5px; border-radius: 3px; font-family: monospace; }
+.context-card-hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.5;
+}
+.context-card-error { font-size: 0.8rem; color: var(--danger); margin: 8px 0 0; }

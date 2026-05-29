@@ -112,6 +112,24 @@ export interface CodeAnalysisOutput {
   suggestions: string[]
 }
 
+export interface ContextRestoreInput {
+  projectName: string
+  description: string | null
+  lastSession: {
+    startedAt: string
+    endedAt: string | null
+    durationMinutes: number | null
+    aiSummary: string | null
+    blockers: string[]
+    decisions: string[]
+    nextSteps: string[]
+  } | null
+  gitBranch: string | null
+  lastCommitMessage: string | null
+  openBlockers: string[]
+  recentMemories: { type: string; title: string; content: string }[]
+}
+
 export interface AIProvider {
   summarizeSession(input: SessionSummaryInput): Promise<SessionSummaryOutput>
   createDailyBriefing(input: DailyBriefingInput): Promise<DailyBriefingOutput>
@@ -119,4 +137,5 @@ export interface AIProvider {
   chatGlobal(input: GlobalChatInput): Promise<ProjectChatOutput>
   analyzeCode(input: CodeAnalysisInput): Promise<CodeAnalysisOutput>
   analyzeCodeStream(input: CodeAnalysisInput, onChunk: (text: string) => void): Promise<void>
+  restoreContext(input: ContextRestoreInput, onChunk: (text: string) => void): Promise<void>
 }

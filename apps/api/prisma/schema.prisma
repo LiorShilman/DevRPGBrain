@@ -26,6 +26,7 @@ model Project {
   sessions     WorkSession[]
   memories     MemoryItem[]
   healthScores ProjectHealth[]
+  bossFights   BossFight[]
 }
 
 model GitSnapshot {
@@ -142,4 +143,17 @@ model AchievementUnlock {
   id             String   @id @default(uuid())
   achievementKey String   @unique
   unlockedAt     DateTime @default(now())
+}
+
+model BossFight {
+  id          String    @id @default(uuid())
+  projectId   String
+  name        String
+  description String
+  xpReward    Int       @default(500)
+  status      String    @default("ACTIVE")
+  createdAt   DateTime  @default(now())
+  defeatedAt  DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

@@ -1,15 +1,24 @@
-import { useEffect, useState } from 'react'
-import { briefingApi, rpgApi, DailyBriefing, RpgProfile } from '../services/api'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { briefingApi, rpgApi, bossFightApi, DailyBriefing, RpgProfile, BossFight } from '../services/api'
+
+function XpBar({ pct, className }: { pct: number; className: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { ref.current?.style.setProperty('--xp-w', `${pct}%`) }, [pct])
+  return <div ref={ref} className={className} />
+}
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
   const [briefing, setBriefing] = useState<DailyBriefing | null>(null)
   const [profile, setProfile] = useState<RpgProfile | null>(null)
+  const [bossFights, setBossFights] = useState<BossFight[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([briefingApi.get(), rpgApi.getProfile()])
-      .then(([b, p]) => { setBriefing(b); setProfile(p) })
+    Promise.all([briefingApi.get(), rpgApi.getProfile(), bossFightApi.listActive().catch(() => [] as BossFight[])])
+      .then(([b, p, bf]) => { setBriefing(b); setProfile(p); setBossFights(bf) })
       .catch(() => setError('Could not connect to API. Make sure npm run dev:api is running.'))
       .finally(() => setLoading(false))
   }, [])
@@ -31,6 +40,33 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Boss fights */}
+      {bossFights.length > 0 && (
+        <div className="boss-section">
+          <div className="boss-section-title">Active Boss Fights</div>
+          {bossFights.map((boss) => (
+            <div key={boss.id} className="boss-card">
+              <div className="boss-icon">👾</div>
+              <div className="boss-body">
+                <div className="boss-name">{boss.name}</div>
+                {boss.projectName && <div className="boss-project">{boss.projectName}</div>}
+                <div className="boss-desc">{boss.description}</div>
+                <div className="boss-footer">
+                  <span className="boss-xp">+{boss.xpReward} XP on defeat</span>
+                  <button
+                    type="button"
+                    className="boss-action"
+                    onClick={() => navigate(`/projects/${boss.projectId}`)}
+                  >
+                    Start Battle →
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {briefing && briefing.projectCount > 0 ? (
         <div className="briefing-card">
@@ -72,7 +108,7 @@ export default function DashboardPage() {
         <div className="dashboard-xp-section">
           <h2 className="dashboard-section-title">XP Progress</h2>
           <div className="dashboard-xp-bar-wrap">
-            <div className="dashboard-xp-bar" style={{ '--xp-w': `${profile.progressPercent}%` } as React.CSSProperties} />
+            <XpBar pct={profile.progressPercent} className="dashboard-xp-bar" />
           </div>
           <p className="dashboard-xp-label">{profile.xpProgress} / {profile.xpNeeded} XP to Level {profile.level + 1}</p>
           {profile.recentEvents.length > 0 && (

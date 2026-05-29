@@ -10,14 +10,15 @@ import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
 import {
   projectsApi, gitApi, scanApi, sessionsApi, healthApi, brainApi, filesApi,
+  contextApi, knowledgeApi,
   Project, GitSnapshot, ScanResult, WorkSession, ProjectHealth,
   DependencyData, CommitInfo, BranchInfo, ChatMessage, ArchComponent, ArchConnection,
-  FileNode, SearchResult, CodeAnalysisOutput,
+  FileNode, SearchResult, KnowledgeNode, KnowledgeEdge,
 } from '../services/api'
 import DependencyGraph from '../components/DependencyGraph/DependencyGraph'
 import { parseCodeSections, SECTION_CONFIG, type CodeSection } from '../utils/parseCodeSections'
 
-type Tab = 'overview' | 'graph' | 'architecture' | 'branches' | 'radar' | 'files' | 'search' | 'brain'
+type Tab = 'overview' | 'graph' | 'architecture' | 'branches' | 'radar' | 'files' | 'search' | 'brain' | 'knowledge'
 const TAB_LABELS: Record<Tab, string> = {
   overview: '⊟ Overview',
   graph: '⬡ Graph',
@@ -27,6 +28,7 @@ const TAB_LABELS: Record<Tab, string> = {
   files: '⊞ Files',
   search: '⌕ Search',
   brain: '◈ Brain',
+  knowledge: '⬡ Knowledge',
 }
 
 // ─── Architecture diagram ────────────────────────────────────────────────────
@@ -46,26 +48,35 @@ const ARCH_COLORS: Record<string, string> = {
 function ArchNodeComponent({ data }: NodeProps) {
   const d = data as { label: string; tech: string; icon: string; fileCount: number; color: string }
   const col = d.color
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!ref.current) return
+    const el = ref.current
+    el.style.setProperty('--arch-col', col)
+    el.style.setProperty('--arch-border', `${col}55`)
+    el.style.setProperty('--arch-glow', `${col}25`)
+    el.style.setProperty('--arch-pulse', `${col}20`)
+    el.style.setProperty('--arch-bg', `${col}15`)
+    el.style.setProperty('--arch-mid', `${col}40`)
+    el.style.setProperty('--arch-low', `${col}30`)
+  }, [col])
   return (
-    <div className="arch-node" style={{
-      borderColor: `${col}55`,
-      boxShadow: `0 0 20px ${col}25, 0 4px 16px rgba(0,0,0,0.2)`,
-    }}>
-      <div className="arch-node-pulse" style={{ borderColor: `${col}20` }} />
-      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
-      <div className="arch-node-icon" style={{ background: `${col}15`, borderColor: `${col}40`, color: col }}>
+    <div ref={ref} className="arch-node">
+      <div className="arch-node-pulse" />
+      <Handle type="target" position={Position.Top} className="arch-handle" />
+      <div className="arch-node-icon">
         {d.icon}
       </div>
       <div className="arch-node-content">
         <div className="arch-node-label">{d.label}</div>
         <div className="arch-node-sub">
-          <span className="arch-node-tech" style={{ background: `${col}15`, borderColor: `${col}30`, color: col }}>
+          <span className="arch-node-tech">
             {d.tech}
           </span>
           <span className="arch-node-files">{d.fileCount} files</span>
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} className="arch-handle" />
     </div>
   )
 }
@@ -272,21 +283,17 @@ function TechRadarTab({ scan }: { scan: ScanResult | null }) {
         })}
         {/* Blips */}
         {blips.map((b) => {
-          const col = QUADRANTS[b.q].color
           const isHov = hovered === b.tech
           return (
-            <g key={b.tech} style={{ cursor: 'pointer' }}
+            <g key={b.tech}
+              className={`blip blip-q${b.q}${isHov ? ' blip-hov' : ''}`}
               onMouseEnter={() => setHovered(b.tech)}
               onMouseLeave={() => setHovered(null)}>
-              {isHov && <circle cx={b.x} cy={b.y} r={10} fill={col} opacity={0.2} />}
-              <circle cx={b.x} cy={b.y} r={isHov ? 6 : 5}
-                fill={col} opacity={isHov ? 1 : 0.75}
-                stroke={isHov ? '#fff' : 'none'} strokeWidth={1.5}
-              />
+              {isHov && <circle className="blip-halo" cx={b.x} cy={b.y} r={10} />}
+              <circle className={`blip-circle${isHov ? ' blip-circle-hov' : ''}`} cx={b.x} cy={b.y} r={isHov ? 6 : 5} />
               {isHov && (
-                <text x={b.x} y={b.y - 12} textAnchor="middle"
-                  fontSize={11} fontWeight="600" fill={col} fontFamily="sans-serif"
-                  style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }}>
+                <text className="blip-label" x={b.x} y={b.y - 12} textAnchor="middle"
+                  fontSize={11} fontWeight="600" fontFamily="sans-serif">
                   {b.tech}
                 </text>
               )}
@@ -298,15 +305,14 @@ function TechRadarTab({ scan }: { scan: ScanResult | null }) {
       </svg>
 
       <div className="radar-legend">
-        {QUADRANTS.map((qt) => (
-          <div key={qt.label} className="radar-legend-quadrant">
-            <span className="radar-legend-label" style={{ color: qt.color }}>● {qt.label}</span>
+        {QUADRANTS.map((qt, qi) => (
+          <div key={qt.label} className={`radar-legend-quadrant radar-q${qi}`}>
+            <span className="radar-legend-label">● {qt.label}</span>
             <div className="radar-legend-items">
-              {blips.filter((b) => b.q === QUADRANTS.indexOf(qt)).map((b) => (
+              {blips.filter((b) => b.q === qi).map((b) => (
                 <span
                   key={b.tech}
                   className={`radar-blip-tag${hovered === b.tech ? ' hovered' : ''}`}
-                  style={{ borderColor: `${qt.color}40`, color: qt.color }}
                   onMouseEnter={() => setHovered(b.tech)}
                   onMouseLeave={() => setHovered(null)}
                 >
@@ -323,6 +329,32 @@ function TechRadarTab({ scan }: { scan: ScanResult | null }) {
 
 // ─── Branches tab ────────────────────────────────────────────────────────────
 
+function CommitItem({ commit, index, isHead, isLast, headBranch }: {
+  commit: CommitInfo; index: number; isHead: boolean; isLast: boolean; headBranch?: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { ref.current?.style.setProperty('--delay', `${index * 0.03}s`) }, [index])
+  return (
+    <div ref={ref} className={`commit-item${isHead ? ' commit-head' : ''}`}>
+      <div className="commit-track">
+        <div className={`commit-dot${isHead ? ' commit-dot-head' : ''}`} />
+        {!isLast && <div className="commit-line" />}
+      </div>
+      <div className="commit-body">
+        <div className="commit-msg">{commit.message}</div>
+        <div className="commit-meta">
+          <span className="commit-hash">{commit.hash}</span>
+          <span className="commit-author">{commit.author}</span>
+          <span className="commit-date">{new Date(commit.date).toLocaleDateString()}</span>
+        </div>
+        {isHead && headBranch && (
+          <span className="commit-head-badge">HEAD · {headBranch}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function BranchesTab({ projectId }: { projectId: string }) {
   const [branches, setBranches] = useState<BranchInfo[]>([])
   const [commits, setCommits] = useState<CommitInfo[]>([])
@@ -337,7 +369,7 @@ function BranchesTab({ projectId }: { projectId: string }) {
   }, [projectId])
 
   if (loading) return <TabCenter><span className="brain-thinking-dots"><span /><span /><span /></span> Loading…</TabCenter>
-  if (error) return <TabCenter style={{ color: '#ef4444' }}>Git error: {error}</TabCenter>
+  if (error) return <TabCenter error>Git error: {error}</TabCenter>
   if (branches.length === 0) return <TabCenter>No branches found. Run a Git scan first.</TabCenter>
 
   const currentBranch = branches.find((b) => b.isCurrent)
@@ -352,28 +384,9 @@ function BranchesTab({ projectId }: { projectId: string }) {
         ))}
       </div>
       <div className="commit-timeline">
-        {commits.map((c, i) => {
-          const isFirst = i === 0
-          return (
-            <div key={c.hash} className={`commit-item${isFirst ? ' commit-head' : ''}`} style={{ animationDelay: `${i * 0.03}s` }}>
-              <div className="commit-track">
-                <div className="commit-dot" style={isFirst ? { background: '#38bdf8', boxShadow: '0 0 8px #38bdf825' } : {}} />
-                {i < commits.length - 1 && <div className="commit-line" />}
-              </div>
-              <div className="commit-body">
-                <div className="commit-msg">{c.message}</div>
-                <div className="commit-meta">
-                  <span className="commit-hash">{c.hash}</span>
-                  <span className="commit-author">{c.author}</span>
-                  <span className="commit-date">{new Date(c.date).toLocaleDateString()}</span>
-                </div>
-                {isFirst && currentBranch && (
-                  <span className="commit-head-badge">HEAD · {currentBranch.name}</span>
-                )}
-              </div>
-            </div>
-          )
-        })}
+        {commits.map((c, i) => (
+          <CommitItem key={c.hash} commit={c} index={i} isHead={i === 0} isLast={i === commits.length - 1} headBranch={i === 0 ? currentBranch?.name : undefined} />
+        ))}
         {commits.length === 0 && <p className="branches-empty">No commits found.</p>}
       </div>
     </div>
@@ -475,6 +488,8 @@ function OverviewTab({ project, git, scan, sessions, health }: {
   sessions: WorkSession[]; health: ProjectHealth | null
 }) {
   return (
+    <div className="overview-wrap">
+    <ContextRestorationCard projectId={project.id} />
     <div className="overview-grid">
       <div className="overview-col">
         <div className="detail-card">
@@ -547,6 +562,7 @@ function OverviewTab({ project, git, scan, sessions, health }: {
         </div>
       </div>
     </div>
+    </div>
   )
 }
 
@@ -564,16 +580,24 @@ function FileTreeNode({ node, depth, selectedPath, onSelect }: {
   node: FileNode; depth: number; selectedPath: string | null; onSelect: (f: FileNode) => void
 }) {
   const [open, setOpen] = useState(depth < 2)
+  const dirRef = useRef<HTMLButtonElement>(null)
+  const fileRef = useRef<HTMLButtonElement>(null)
   const icon = node.type === 'dir' ? (open ? '▾' : '▸') : (FILE_ICONS[node.ext ?? ''] ?? '📄')
   const isSelected = selectedPath === node.path
+  const pad = 8 + depth * 14
+
+  useEffect(() => {
+    dirRef.current?.style.setProperty('--tree-pad', `${pad}px`)
+    fileRef.current?.style.setProperty('--tree-pad', `${pad}px`)
+  }, [pad])
 
   if (node.type === 'dir') {
     return (
       <div>
         <button
+          ref={dirRef}
           type="button"
           className="file-tree-dir"
-          style={{ paddingLeft: 8 + depth * 14 }}
           onClick={() => setOpen((o) => !o)}
         >
           <span className="file-tree-arrow">{icon}</span>
@@ -589,9 +613,9 @@ function FileTreeNode({ node, depth, selectedPath, onSelect }: {
 
   return (
     <button
+      ref={fileRef}
       type="button"
       className={`file-tree-file${isSelected ? ' selected' : ''}`}
-      style={{ paddingLeft: 8 + depth * 14 }}
       onClick={() => onSelect(node)}
     >
       <span className="file-tree-icon">{icon}</span>
@@ -731,7 +755,7 @@ function CodeMapView({ projectId, filePath, content, language }: {
           {sections.map((s, i) => {
             const cfg = SECTION_CONFIG[s.type]
             const w = Math.max((s.lineCount / totalLines) * 100, 1.5)
-            return <div key={i} className="cm-minimap-block" style={{ '--w': `${w}%`, '--col': cfg.color } as React.CSSProperties} title={`${cfg.label}: ${s.name} (${s.lineCount}L)`} />
+            return <MinimapBlock key={i} w={w} sectionType={s.type} label={`${cfg.label}: ${s.name} (${s.lineCount}L)`} />
           })}
         </div>
         <div className="cm-legend">
@@ -739,7 +763,7 @@ function CodeMapView({ projectId, filePath, content, language }: {
             const cfg = SECTION_CONFIG[type as keyof typeof SECTION_CONFIG]
             return (
               <span key={type} className="cm-legend-item">
-                <span className="cm-legend-dot" style={{ '--col': cfg?.color } as React.CSSProperties} />
+                <span className={`cm-legend-dot cm-type-${type}`} />
                 {cfg?.label} ({count})
               </span>
             )
@@ -770,7 +794,7 @@ function CodeMapView({ projectId, filePath, content, language }: {
           const isAiActive = aiTarget?.section === section
 
           return (
-            <div key={i} className={`cm-section${isExpanded ? ' cm-section-expanded' : ''}`} style={{ '--cm-color': cfg.color } as React.CSSProperties}>
+            <div key={i} className={`cm-section cm-type-${section.type}${isExpanded ? ' cm-section-expanded' : ''}`}>
               <div className="cm-section-row">
                 <button type="button" className="cm-section-header" onClick={() => setExpandedIdx(isExpanded ? null : i)}>
                   <div className="cm-section-stripe" />
@@ -849,7 +873,7 @@ function FilesTab({ projectId }: { projectId: string }) {
   }, [projectId])
 
   if (treeLoading) return <TabCenter><span className="brain-thinking-dots"><span /><span /><span /></span> Loading files…</TabCenter>
-  if (treeError) return <TabCenter style={{ color: '#ef4444' }}>Error: {treeError}</TabCenter>
+  if (treeError) return <TabCenter error>Error: {treeError}</TabCenter>
   if (!tree || tree.length === 0) return <TabCenter>No files found in this project.</TabCenter>
 
   return (
@@ -998,10 +1022,178 @@ function SearchTab({ projectId }: { projectId: string }) {
   )
 }
 
+// ─── Knowledge Graph tab ─────────────────────────────────────────────────────
+
+const NODE_TYPE_META: Record<string, { color: string; label: string }> = {
+  session:  { color: '#38bdf8', label: 'Session'   },
+  decision: { color: '#a78bfa', label: 'Decision'  },
+  blocker:  { color: '#ef4444', label: 'Blocker'   },
+  nextStep: { color: '#22c55e', label: 'Next Step' },
+  memory:   { color: '#f59e0b', label: 'Memory'    },
+}
+
+function KnowledgeNodeComponent({ data }: NodeProps) {
+  const d = data as { label: string; type: string; date?: string }
+  const meta = NODE_TYPE_META[d.type] ?? { color: '#64748b', label: d.type }
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!ref.current) return
+    ref.current.style.setProperty('--kg-col', meta.color)
+    ref.current.style.setProperty('--kg-bg', `${meta.color}18`)
+    ref.current.style.setProperty('--kg-border', `${meta.color}55`)
+  }, [meta.color])
+  return (
+    <div ref={ref} className={`kg-node kg-node-${d.type}`}>
+      <Handle type="target" position={Position.Top} className="arch-handle" />
+      <div className="kg-node-type">{meta.label}</div>
+      <div className="kg-node-label">{d.label}</div>
+      {d.date && <div className="kg-node-date">{new Date(d.date).toLocaleDateString()}</div>}
+      <Handle type="source" position={Position.Bottom} className="arch-handle" />
+    </div>
+  )
+}
+
+const KG_NODE_TYPES = { kg: KnowledgeNodeComponent }
+
+function buildKgLayout(rawNodes: KnowledgeNode[], rawEdges: KnowledgeEdge[]) {
+  const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
+  g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 80, marginx: 40, marginy: 40 })
+  for (const n of rawNodes) g.setNode(n.id, { width: 200, height: 64 })
+  for (const e of rawEdges) if (g.hasNode(e.source) && g.hasNode(e.target)) g.setEdge(e.source, e.target)
+  Dagre.layout(g)
+
+  const nodes: Node[] = rawNodes.map((n) => {
+    const pos = g.node(n.id)
+    return {
+      id: n.id,
+      type: 'kg',
+      position: { x: pos.x - 100, y: pos.y - 32 },
+      data: { label: n.label, type: n.type, date: n.date },
+    }
+  })
+
+  const edges: Edge[] = rawEdges.map((e, i) => ({
+    id: `kge${i}`,
+    source: e.source,
+    target: e.target,
+    type: 'smoothstep',
+    animated: false,
+    style: { stroke: '#334155', strokeWidth: 1 },
+    markerEnd: { type: MarkerType.ArrowClosed, width: 10, height: 10, color: '#334155' },
+  }))
+
+  return { nodes, edges }
+}
+
+function KnowledgeTab({ projectId }: { projectId: string }) {
+  const [rawNodes, setRawNodes] = useState<KnowledgeNode[]>([])
+  const [rawEdges, setRawEdges] = useState<KnowledgeEdge[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    knowledgeApi.get(projectId)
+      .then(({ nodes, edges }) => { setRawNodes(nodes); setRawEdges(edges) })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false))
+  }, [projectId])
+
+  const { nodes: initNodes, edges: initEdges } = useMemo(
+    () => (rawNodes.length > 0 ? buildKgLayout(rawNodes, rawEdges) : { nodes: [], edges: [] }),
+    [rawNodes, rawEdges]
+  )
+  const [nodes, , onNodesChange] = useNodesState(initNodes)
+  const [edges, , onEdgesChange] = useEdgesState(initEdges)
+
+  if (loading) return <TabCenter><span className="brain-thinking-dots"><span /><span /><span /></span> Loading knowledge graph…</TabCenter>
+  if (error) return <TabCenter error>Error: {error}</TabCenter>
+  if (rawNodes.length === 0) return <TabCenter>No sessions yet — start a session to build your knowledge graph.</TabCenter>
+
+  return (
+    <div className="tab-full-graph">
+      <ReactFlow
+        nodes={nodes} edges={edges} nodeTypes={KG_NODE_TYPES}
+        onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+        fitView fitViewOptions={{ padding: 0.3, minZoom: 0.2, maxZoom: 1.5 }}
+        minZoom={0.1} maxZoom={2} proOptions={{ hideAttribution: true }}
+        nodesFocusable={false}
+      >
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1e293b" />
+        <MiniMap style={{ background: '#0d1117', border: '1px solid #1e293b' }}
+          maskColor="rgba(0,0,0,0.5)" pannable zoomable
+          nodeColor={(n) => NODE_TYPE_META[(n.data as { type: string }).type]?.color ?? '#334155'}
+        />
+      </ReactFlow>
+      <div className="kg-legend">
+        {Object.entries(NODE_TYPE_META).map(([type, meta]) => (
+          <span key={type} className={`kg-legend-item kg-legend-${type}`}>{meta.label}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Context Restoration Card ─────────────────────────────────────────────────
+
+function ContextRestorationCard({ projectId }: { projectId: string }) {
+  const [streaming, setStreaming] = useState(false)
+  const [text, setText] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+
+  function handleRestore() {
+    setStreaming(true)
+    setText('')
+    setError(null)
+    setDone(false)
+    let accumulated = ''
+    contextApi.restoreStream(
+      projectId,
+      (chunk) => { accumulated += chunk; setText(accumulated) }
+    )
+      .then(() => setDone(true))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setStreaming(false))
+  }
+
+  return (
+    <div className="context-card">
+      <div className="context-card-header">
+        <span className="context-card-title">◈ Context Restoration</span>
+        {!streaming && (
+          <button type="button" className="context-card-btn" onClick={handleRestore}>
+            {done ? '↺ Re-restore' : '◈ Restore Context'}
+          </button>
+        )}
+        {streaming && <span className="brain-thinking-dots"><span /><span /><span /></span>}
+      </div>
+      {error && <p className="context-card-error">{error}</p>}
+      {text && (
+        <div
+          className="context-card-body"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
+        />
+      )}
+      {!text && !streaming && (
+        <p className="context-card-hint">
+          AI rebuilds your mental context from the last session — where you left off, open threads, and next actions.
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
-function TabCenter({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div className="tab-center" style={style}>{children}</div>
+function TabCenter({ children, error }: { children: React.ReactNode; error?: boolean }) {
+  return <div className={`tab-center${error ? ' tab-center-error' : ''}`}>{children}</div>
+}
+
+function MinimapBlock({ label, w, sectionType }: { label: string; w: number; sectionType: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { ref.current?.style.setProperty('--w', `${w}%`) }, [w])
+  return <div ref={ref} className={`cm-minimap-block cm-type-${sectionType}`} title={label} />
 }
 
 // ─── Main page ───────────────────────────────────────────────────────────────
@@ -1080,6 +1272,7 @@ export default function ProjectDetailPage() {
         {tab === 'files'         && <FilesTab projectId={id} />}
         {tab === 'search'        && <SearchTab projectId={id} />}
         {tab === 'brain'         && <BrainTab project={project} />}
+        {tab === 'knowledge'     && <KnowledgeTab projectId={id} />}
       </div>
     </div>
   )

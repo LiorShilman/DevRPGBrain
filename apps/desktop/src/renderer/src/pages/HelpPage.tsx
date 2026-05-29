@@ -1,6 +1,6 @@
 export default function HelpPage() {
   return (
-    <div className="page help-page" dir="rtl">
+    <div className="page help-page">
       <div className="page-header">
         <div>
           <h1 className="page-title">מדריך השימוש</h1>
@@ -52,7 +52,7 @@ export default function HelpPage() {
         </div>
 
         <div className="help-card">
-          <div className="help-card-icon">▶ Continue</div>
+          <div className="help-card-icon">⏵</div>
           <div className="help-card-body">
             <h2 className="help-card-title">כרטיס המשך</h2>
             <p className="help-card-desc">
@@ -91,7 +91,7 @@ export default function HelpPage() {
             <h2 className="help-card-title">מערכת ה-RPG</h2>
             <p className="help-card-desc">
               כל פעולה אמיתית מתורגמת לנקודות XP. XP צובר רמות, ורמות מפתחות הישגים.
-              הפרופיל שלך מוצג בתחתית הסיידבר ובעמוד ה-RPG.
+              עמוד ה-RPG מציג גם גרף רדאר משושה של 6 מיומנויות המפתח שלך.
             </p>
             <ul className="help-list">
               <li><strong>XP בסיסי:</strong> 5 נקודות לכל סשן</li>
@@ -99,7 +99,25 @@ export default function HelpPage() {
               <li><strong>הערות:</strong> +5 XP אם כתבת מה עשית</li>
               <li><strong>חסמים:</strong> +3 XP לכל חסם (עד 15)</li>
               <li><strong>צעדים הבאים:</strong> +2 XP לכל אחד (עד 10)</li>
+              <li><strong>Boss Fight:</strong> +500–750 XP על ניצחון</li>
               <li><strong>נוסחת רמה:</strong> <code>√(XP ÷ 100) + 1</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="help-card">
+          <div className="help-card-icon">👾</div>
+          <div className="help-card-body">
+            <h2 className="help-card-title">Boss Fights — קרבות בוסים</h2>
+            <p className="help-card-desc">
+              כשפרויקט מגיע למצב Risky או Abandoned, מתעורר בוס — אויב שמייצג את החוב הטכני
+              והזנחת הפרויקט. נצח בו על ידי השלמת סשן עבודה.
+            </p>
+            <ul className="help-list">
+              <li><strong>The Crumbling Service</strong> — מופיע בסטטוס Risky (+500 XP)</li>
+              <li><strong>The Forsaken Codebase</strong> — מופיע בסטטוס Abandoned (+750 XP)</li>
+              <li>הבוסים מוצגים ב-Dashboard כקארדים אדומים</li>
+              <li>ניצחון אוטומטי עם סיום סשן עבודה בפרויקט</li>
             </ul>
           </div>
         </div>
@@ -161,6 +179,61 @@ export default function HelpPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="help-card">
+          <div className="help-card-icon">◈</div>
+          <div className="help-card-body">
+            <h2 className="help-card-title">Context Restoration — שחזור קונטקסט</h2>
+            <p className="help-card-desc">
+              לחץ על <strong>◈ Restore Context</strong> בטאב Overview של כל פרויקט. ה-AI מנתח את
+              הסשן האחרון, החלטות, חסמים, וזיכרונות — ומשחזר בזרם חי את מצב החשיבה שלך.
+            </p>
+            <ul className="help-list">
+              <li><strong>Where You Left Off</strong> — מה היה בתהליך</li>
+              <li><strong>Open Threads</strong> — שאלות ובלוקרים פתוחים</li>
+              <li><strong>Next Actions</strong> — 3 הפעולות הדחופות לפי עדיפות</li>
+              <li><strong>Cognitive Snapshot</strong> — הקשר אדריכלי וגוצ׳ות</li>
+              <li><strong>Energy Check</strong> — משפט מוטיבציה שמחבר לתמונה הגדולה</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="help-card">
+          <div className="help-card-icon">⊞</div>
+          <div className="help-card-body">
+            <h2 className="help-card-title">Files + Code Map — סייר קבצים</h2>
+            <p className="help-card-desc">
+              טאב Files בכל פרויקט פותח סייר קבצים מלא עם הדגשת תחביר. מצב Code Map מנתח
+              את הקוד לסקציות ומאפשר ניתוח AI לכל פונקציה בנפרד.
+            </p>
+            <ul className="help-list">
+              <li>עץ קבצים מלא עם אייקונים לפי סיומת</li>
+              <li>הדגשת תחביר אוטומטית (highlight.js)</li>
+              <li><strong>◈ Map</strong> — מפה ויזואלית של כל הסקציות בקובץ</li>
+              <li>לחץ <strong>◈</strong> ליד פונקציה לקבלת הסבר AI בזרם</li>
+              <li><strong>◈ Explain File</strong> — ניתוח AI לכל הקובץ</li>
+              <li>טאב <strong>⌕ Search</strong> — חיפוש בשמות קבצים ובתוכן הקוד</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="help-card">
+          <div className="help-card-icon">⬡</div>
+          <div className="help-card-body">
+            <h2 className="help-card-title">Knowledge Graph — גרף ידע</h2>
+            <p className="help-card-desc">
+              טאב Knowledge בכל פרויקט מציג גרף אינטראקטיבי של כל הסשנים, החלטות, חסמים,
+              צעדים הבאים, וזיכרונות — ואיך הם מתחברים.
+            </p>
+            <ul className="help-list">
+              <li><span className="help-dot kg-session" />סשן עבודה</li>
+              <li><span className="help-dot kg-decision" />החלטה</li>
+              <li><span className="help-dot kg-blocker" />בלוקר</li>
+              <li><span className="help-dot kg-next" />צעד הבא</li>
+              <li><span className="help-dot kg-memory" />זיכרון</li>
+            </ul>
           </div>
         </div>
 
